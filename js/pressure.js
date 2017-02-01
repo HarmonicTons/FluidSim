@@ -212,6 +212,7 @@ function FluidField() {
         advect(2, v, v0, u0, v0, dt);
         project(u, v, u0, v0);
     }
+
     var uiCallback;
 
     function Field(dens, u, v) {
@@ -251,18 +252,25 @@ function FluidField() {
         return new Field(dens, u, v);
     }
 
-    function queryUI(d, u, v, f) {
-        for (var i = 0; i < size; i++)
-            u[i] = v[i] = d[i] = 0.0;
-        uiCallback(new Field(d, u, v), f);
+    function queryUI(d, u, v) {
+        // i think that's stupid do reset the prev vectors 
+        /*for (var i = 0; i < size; i++)
+            u[i] = v[i] = d[i] = 0.0;*/
+        uiCallback(new Field(d, u, v));
     }
 
     this.update = function() {
-        let f = new Field(dens, u, v);
-        queryUI(dens_prev, u_prev, v_prev, f);
+        queryUI(dens_prev, u_prev, v_prev);
         vel_step(u, v, u_prev, v_prev, dt);
         dens_step(dens, dens_prev, u, v, dt);
         displayFunc(new Field(dens, u, v));
+
+        // don't know if necessary or even a good idea to do that:
+        for (var i = 0; i < size; i++) {
+            u_prev[i] = u[i];
+            v_prev[i] = v[i];
+            dens_prev[i] = dens[i];
+        }
     }
     this.setDisplayFunction = function(func) {
         displayFunc = func;

@@ -19,12 +19,12 @@ var start = new Date;
 var frames = 0;
 
 
-function prepareFrame(field, prev) {
+function prepareFrame(field) {
     for (let x = 0; x < field.width(); x++) {
         for (let y = 0; y < field.height(); y++) {
-            let p = Math.min(prev.getDensity(x,y), 40);
-            field.setDensity(x, y, - p);
-            field.setVelocity(x, y, Math.random()*0.6-0.3, -0.08);
+            let p = Math.min(field.getDensity(x, y), 40);
+            field.setDensity(x, y, -p);
+            field.setVelocity(x, y, Math.random() * 0.6 - 0.3, -0.08);
         }
     }
     if ((omx >= 0 && omx < displaySize && omy >= 0 && omy < displaySize) && mouseIsDown) {
@@ -35,23 +35,29 @@ function prepareFrame(field, prev) {
         for (var i = 0; i < length; i++) {
             var x = (((omx + dx * (i / length)) / displaySize) * field.width()) | 0;
             var y = (((omy + dy * (i / length)) / displaySize) * field.height()) | 0;
-            for (let j=0; j <4; j++) {
-                for (let k=0; k <4; k++) {
-                    if (x+j-2 >= 0 && x+j-2 < displaySize && y+k-2 >= 0 && y+k-2 < displaySize) {
-                        field.setVelocity(x+j-2, y+k-2, dx/2, dy/2);
-                        field.setDensity(x+j-2, y+k-2, 100);
+            for (let j = 0; j < 4; j++) {
+                for (let k = 0; k < 4; k++) {
+                    if (x + j - 2 >= 0 && x + j - 2 < displaySize && y + k - 2 >= 0 && y + k - 2 < displaySize) {
+                        field.setVelocity(x + j - 2, y + k - 2, dx / 2, dy / 2);
+                        //field.setDensity(x + j - 2, y + k - 2, 100);
                     }
                 }
             }
         }
         omx = mx;
         omy = my;
-    }/*
+    }
     for (var i = 0; i < sources.length; i++) {
         var x = ((sources[i][0] / displaySize) * field.width()) | 0;
         var y = ((sources[i][1] / displaySize) * field.height()) | 0;
-        field.setDensity(x, y, 50);
-    }*/
+        for (let j = 0; j < 4; j++) {
+            for (let k = 0; k < 4; k++) {
+                if (x + j - 2 >= 0 && x + j - 2 < displaySize && y + k - 2 >= 0 && y + k - 2 < displaySize) {
+                    field.setDensity(x + j - 2, y + k - 2, 50);
+                }
+            }
+        }
+    }
 
 }
 
@@ -73,7 +79,7 @@ function updateFrame() {
     frames++;
     if ((end - start) > 1000) {
         document.getElementById("fps").innerHTML = "FPS: " + ((1000 * frames / (end - start) + 0.5) | 0);
-        let fieldInfo =  field.getFieldInfo();
+        let fieldInfo = field.getFieldInfo();
         document.getElementById("avg").innerHTML = fieldInfo.getAvgDensity().toFixed(3);
         document.getElementById("max").innerHTML = fieldInfo.getMaxDensity().toFixed(3);
         start = end;
