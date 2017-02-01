@@ -280,7 +280,7 @@ function FluidField() {
         uiCallback = callback;
     }
     var iterations = 10;
-    var visc = 0.5;
+    var visc = 0;
     var dt = 0.1;
     var dens;
     var dens_prev;
