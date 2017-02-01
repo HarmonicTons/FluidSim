@@ -212,7 +212,7 @@ function FluidField() {
         advect(2, v, v0, u0, v0, dt);
         project(u, v, u0, v0);
     }
-    var uiCallback = function(d, u, v) {};
+    var uiCallback;
 
     function Field(dens, u, v) {
         // Just exposing the fields here rather than using accessors is a measurable win during display (maybe 5%)
