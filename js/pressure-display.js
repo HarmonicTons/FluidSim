@@ -67,12 +67,12 @@ if (this.CanvasRenderingContext2D && !CanvasRenderingContext2D.createImageData) 
                         data[((y * (height * 4)) + (x * 4)) + 2] = 0;
                         data[((y * (height * 4)) + (x * 4)) + 1] = 0;
                         data[((y * (height * 4)) + (x * 4)) + 0] = 0;
-                    } else if (c >= 0.4) {
+                    } else if (c >= 0.3) {
                         data[((y * (height * 4)) + (x * 4)) + 3] = 255;
                         data[((y * (height * 4)) + (x * 4)) + 2] = 10;
                         data[((y * (height * 4)) + (x * 4)) + 1] = 10;
                         data[((y * (height * 4)) + (x * 4)) + 0] = 10;
-                    }else if (c >= 0.2) {
+                    }else if (c >= 0.1) {
                         data[((y * (height * 4)) + (x * 4)) + 3] = 255;
                         data[((y * (height * 4)) + (x * 4)) + 2] = 30;
                         data[((y * (height * 4)) + (x * 4)) + 1] = 30;

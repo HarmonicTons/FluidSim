@@ -6,6 +6,15 @@ function FluidField() {
     function set_bnd(b, x) {
 
         if (b === 1) {
+            for (var i = 40; i <= 50; i++) {
+                x[i + (40 + 1) * rowSize ] = x[i + (39 + 1) * rowSize];
+                x[i + (50 + 1) * rowSize] = x[i + (51 + 1) * rowSize];
+            }
+            for (var j = 40; i <= 50; i++) {
+                x[40 + 1  + j * rowSize] = -x[39 + 1 + j * rowSize];
+                x[50 + 1 + j * rowSize] = -x[51 + 1 + j * rowSize];
+            }
+
             for (var i = 1; i <= width; i++) {
                 x[i] = x[i + rowSize];
                 x[i + (height + 1) * rowSize] = x[i + height * rowSize];
@@ -16,6 +25,15 @@ function FluidField() {
                 x[(width + 1) + j * rowSize] = -x[width + j * rowSize];
             }
         } else if (b === 2) {
+            for (var i = 40; i <= 50; i++) {
+                x[i + (40 + 1) * rowSize ] = -x[i + (39 + 1) * rowSize];
+                x[i + (50 + 1) * rowSize] = -x[i + (51 + 1) * rowSize];
+            }
+            for (var j = 40; i <= 50; i++) {
+                x[40 + 1  + j * rowSize] = x[39 + 1 + j * rowSize];
+                x[50 + 1 + j * rowSize] = x[51 + 1 + j * rowSize];
+            }
+
             for (var i = 1; i <= width; i++) {
                 x[i] = -x[i + rowSize];
                 x[i + (height + 1) * rowSize] = -x[i + height * rowSize];
@@ -26,6 +44,15 @@ function FluidField() {
                 x[(width + 1) + j * rowSize] = x[width + j * rowSize];
             }
         } else {
+            for (var i = 40; i <= 50; i++) {
+                x[i + (40 + 1) * rowSize ] = x[i + (39 + 1) * rowSize];
+                x[i + (50 + 1) * rowSize] = x[i + (51 + 1) * rowSize];
+            }
+            for (var j = 40; i <= 50; i++) {
+                x[40 + 1  + j * rowSize] = x[39 + 1 + j * rowSize];
+                x[50 + 1 + j * rowSize] = x[51 + 1 + j * rowSize];
+            }
+
             for (var i = 1; i <= width; i++) {
                 x[i] = x[i + rowSize];
                 x[i + (height + 1) * rowSize] = x[i + height * rowSize];
