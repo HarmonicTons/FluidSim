@@ -4,6 +4,7 @@ function FluidField() {
     }
 
     function set_bnd(b, x) {
+
         if (b === 1) {
             for (var i = 1; i <= width; i++) {
                 x[i] = x[i + rowSize];
@@ -40,6 +41,7 @@ function FluidField() {
         x[maxEdge] = 0.5 * (x[1 + maxEdge] + x[height * rowSize]);
         x[(width + 1)] = 0.5 * (x[width] + x[(width + 1) + rowSize]);
         x[(width + 1) + maxEdge] = 0.5 * (x[width + maxEdge] + x[(width + 1) + height * rowSize]);
+
     }
 
     function lin_solve(b, x, x0, a, c) {
@@ -253,7 +255,7 @@ function FluidField() {
     }
 
     function queryUI(d, u, v) {
-        // i think that's stupid do reset the prev vectors 
+        // i think that's stupid do reset the prev vectors
         /*for (var i = 0; i < size; i++)
             u[i] = v[i] = d[i] = 0.0;*/
         uiCallback(new Field(d, u, v));

@@ -47,21 +47,36 @@ if (this.CanvasRenderingContext2D && !CanvasRenderingContext2D.createImageData) 
             for (var x = 0; x < width; x++) {
                 for (var y = 0; y < height; y++) {
                     let c = field.getDensity(x, y);
-                    if (c >= 25) {
+                    if (c >= 15) {
                         data[((y * (height * 4)) + (x * 4)) + 3] = 255;
                         data[((y * (height * 4)) + (x * 4)) + 2] = 255;
-                        data[((y * (height * 4)) + (x * 4)) + 1] = 255;
-                        data[((y * (height * 4)) + (x * 4)) + 0] = 255;
+                        data[((y * (height * 4)) + (x * 4)) + 1] = 210;
+                        data[((y * (height * 4)) + (x * 4)) + 0] = 210;
                     } else if (c >= 10) {
                         data[((y * (height * 4)) + (x * 4)) + 3] = 255;
                         data[((y * (height * 4)) + (x * 4)) + 2] = 0;
                         data[((y * (height * 4)) + (x * 4)) + 1] = 165;
                         data[((y * (height * 4)) + (x * 4)) + 0] = 255;
-                    } else if (c >= 2) {
+                    } else if (c >= 3) {
                         data[((y * (height * 4)) + (x * 4)) + 3] = 255;
                         data[((y * (height * 4)) + (x * 4)) + 2] = 0;
-                        data[((y * (height * 4)) + (x * 4)) + 1] = 55;
+                        data[((y * (height * 4)) + (x * 4)) + 1] = 45;
                         data[((y * (height * 4)) + (x * 4)) + 0] = 255;
+                    } else if (c >= 1) {
+                        data[((y * (height * 4)) + (x * 4)) + 3] = 255;
+                        data[((y * (height * 4)) + (x * 4)) + 2] = 0;
+                        data[((y * (height * 4)) + (x * 4)) + 1] = 0;
+                        data[((y * (height * 4)) + (x * 4)) + 0] = 0;
+                    } else if (c >= 0.4) {
+                        data[((y * (height * 4)) + (x * 4)) + 3] = 255;
+                        data[((y * (height * 4)) + (x * 4)) + 2] = 10;
+                        data[((y * (height * 4)) + (x * 4)) + 1] = 10;
+                        data[((y * (height * 4)) + (x * 4)) + 0] = 10;
+                    }else if (c >= 0.2) {
+                        data[((y * (height * 4)) + (x * 4)) + 3] = 255;
+                        data[((y * (height * 4)) + (x * 4)) + 2] = 30;
+                        data[((y * (height * 4)) + (x * 4)) + 1] = 30;
+                        data[((y * (height * 4)) + (x * 4)) + 0] = 30;
                     } else {
                         data[((y * (height * 4)) + (x * 4)) + 3] = 255;
                         data[((y * (height * 4)) + (x * 4)) + 2] = 0;
@@ -97,10 +112,10 @@ if (this.CanvasRenderingContext2D && !CanvasRenderingContext2D.createImageData) 
         context.fillStyle = "black";
         context.fillRect(0, 0, canvas.width, canvas.height);
         context.strokeStyle = "rgb(0,255,0)";
-        var vectorScale = 10;
+        var vectorScale = 20;
         context.beginPath();
-        for (var x = 0; x < field.width(); x++) {
-            for (var y = 0; y < field.height(); y++) {
+        for (var x = 0; x < field.width(); x+=10) {
+            for (var y = 0; y < field.height(); y+=10) {
                 context.moveTo(x * wScale + 0.5 * wScale, y * hScale + 0.5 * hScale);
                 context.lineTo((x + 0.5 + vectorScale * field.getXVelocity(x, y)) * wScale,
                     (y + 0.5 + vectorScale * field.getYVelocity(x, y)) * hScale);
