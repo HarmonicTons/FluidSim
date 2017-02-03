@@ -23,10 +23,12 @@ function prepareFrame(field) {
     for (let x = 0; x < field.width(); x++) {
         for (let y = 0; y < field.height() ; y++) {
             let d = field.getDensity(x, y)
-            let p = Math.min(d, 40);
+            let p = d*1.5;
             field.setDensity(x, y, -p);
-            let rng = Math.random() * 0.6 - 0.3;
-            field.setVelocity(x, y, rng, -d/50);
+            let r = 1;
+            let rng = Math.random() * r - r/2;
+                field.setVelocity(x, y, rng, -Math.pow(d/100,0.4)/1.2);
+
         }
     }
     if ((omx >= 0 && omx < displaySize && omy >= 0 && omy < displaySize) && mouseIsDown) {
@@ -37,11 +39,18 @@ function prepareFrame(field) {
         for (var i = 0; i < length; i++) {
             var x = (((omx + dx * (i / length)) / displaySize) * field.width()) | 0;
             var y = (((omy + dy * (i / length)) / displaySize) * field.height()) | 0;
-            for (let j = 0; j < 4; j++) {
-                for (let k = 0; k < 4; k++) {
-                    if (x + j - 2 >= 0 && x + j - 2 < displaySize && y + k - 2 >= 0 && y + k - 2 < displaySize) {
-                        field.setVelocity(x + j - 2, y + k - 2, dx / 2, dy / 2 - 1);
-                        field.setDensity(x + j - 2, y + k - 2, 100);
+            let radius = 3;
+            for (let j = 0; j < 2*radius+1; j++) {
+                for (let k = 0; k < 2*radius+1; k++) {
+                    let px = x + j - radius;
+                    let py = y + k - radius;
+                    let dist = Math.pow((j-radius)*(j-radius)+(k-radius)*(k-radius), 0.5);
+                    let val = 100 * (1 - dist / Math.pow(2*radius*radius,0.5));
+                    val = val > 100 ? 100 : val;
+                    val = val < 0 ? 0 : val;
+                    if (px >= 0 && px < displaySize && py >= 0 && py < displaySize) {
+                        field.setVelocity(px, py, dx / 2, dy / 2 );
+                        field.setDensity(px, py, val);
                     }
                 }
             }
@@ -52,11 +61,10 @@ function prepareFrame(field) {
     for (var i = 0; i < sources.length; i++) {
         var x = ((sources[i][0] / displaySize) * field.width()) | 0;
         var y = ((sources[i][1] / displaySize) * field.height()) | 0;
-        for (let j = 0; j < 4; j++) {
-            for (let k = 0; k < 4; k++) {
+        for (let j = 0; j < 5; j++) {
+            for (let k = 0; k < 5; k++) {
                 if (x + j - 2 >= 0 && x + j - 2 < displaySize && y + k - 2 >= 0 && y + k - 2 < displaySize) {
                     field.setDensity(x + j - 2, y + k - 2, 100);
-                    field.setVelocity(x + j - 2, y + k - 2, 0, - 2);
                 }
             }
         }

@@ -288,8 +288,9 @@ function FluidField() {
         uiCallback(new Field(d, u, v));
     }
 
-    this.update = function() {
+    this.update = function() {9
         queryUI(dens_prev, u_prev, v_prev);
+        // insert fire physics here
         vel_step(u, v, u_prev, v_prev, dt);
         dens_step(dens, dens_prev, u, v, dt);
         displayFunc(new Field(dens, u, v));
