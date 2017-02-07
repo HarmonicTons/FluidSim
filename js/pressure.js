@@ -1,17 +1,67 @@
+function Field() {
+    this.length = 0;
+    this.width = 0;
+    this.boundaries = []; // obstacles dans le champs
+    this.iterations = 0; // nombre total d'iterations effectuées depuis le lancement de la simulation
+    this.isPaused = true;
+    this.userActions = []; // influence de l'utilisateur pas encore pris en compte (remis a vide quand pris en compte par la simulation)
+
+    this.startSimulation = function() {
+        if (!this.isPaused) {
+            console.log("The simulation is already running.");
+            return;
+        }
+        this.isPaused = false;
+        this.simulationLoop();
+    }
+
+    this.pauseSimulation = function() {
+        if (this.isPaused) {
+            console.log("The simulation is already paused.");
+            return;
+        }
+        this.isPaused = true;
+    }
+
+
+    this.ui = function() {
+        return // renvoie un object permettant à d'indiquer les actions de l'utilisateur > impact userActions
+    }
+
+    this.fluidSolver = require('fluidSolver')(u,v,d) // récupère fluidsolver dans un autre fichier plutôt que de le mélanger avec
+    // dans ce fluidsolver les fields u, v et d doivent être les mêmes pour les manipuler directement
+
+    this.simulationLoop = function() {
+        if (this.isPaused) {
+            return;
+        }
+
+        this.applyUserActions();
+        this.applyPhysics();
+        this.fluidSolver();
+
+        this.iterations++;
+        setTimeout(function() {
+            this.simulationLoop()
+        }, 0);
+    }
+
+    simulationLoop();
+}
+
 function FluidField() {
     function addFields(x, s, dt) {
         for (var i = 0; i < size; i++) x[i] += dt * s[i];
     }
 
     function set_bnd(b, x) {
-
         if (b === 1) {
             for (var i = 40; i <= 50; i++) {
-                x[i + (40 + 1) * rowSize ] = x[i + (39 + 1) * rowSize];
+                x[i + (40 + 1) * rowSize] = x[i + (39 + 1) * rowSize];
                 x[i + (50 + 1) * rowSize] = x[i + (51 + 1) * rowSize];
             }
             for (var j = 40; i <= 50; i++) {
-                x[40 + 1  + j * rowSize] = -x[39 + 1 + j * rowSize];
+                x[40 + 1 + j * rowSize] = -x[39 + 1 + j * rowSize];
                 x[50 + 1 + j * rowSize] = -x[51 + 1 + j * rowSize];
             }
 
@@ -26,11 +76,11 @@ function FluidField() {
             }
         } else if (b === 2) {
             for (var i = 40; i <= 50; i++) {
-                x[i + (40 + 1) * rowSize ] = -x[i + (39 + 1) * rowSize];
+                x[i + (40 + 1) * rowSize] = -x[i + (39 + 1) * rowSize];
                 x[i + (50 + 1) * rowSize] = -x[i + (51 + 1) * rowSize];
             }
             for (var j = 40; i <= 50; i++) {
-                x[40 + 1  + j * rowSize] = x[39 + 1 + j * rowSize];
+                x[40 + 1 + j * rowSize] = x[39 + 1 + j * rowSize];
                 x[50 + 1 + j * rowSize] = x[51 + 1 + j * rowSize];
             }
 
@@ -45,11 +95,11 @@ function FluidField() {
             }
         } else {
             for (var i = 40; i <= 50; i++) {
-                x[i + (40 + 1) * rowSize ] = x[i + (39 + 1) * rowSize];
+                x[i + (40 + 1) * rowSize] = x[i + (39 + 1) * rowSize];
                 x[i + (50 + 1) * rowSize] = x[i + (51 + 1) * rowSize];
             }
             for (var j = 40; i <= 50; i++) {
-                x[40 + 1  + j * rowSize] = x[39 + 1 + j * rowSize];
+                x[40 + 1 + j * rowSize] = x[39 + 1 + j * rowSize];
                 x[50 + 1 + j * rowSize] = x[51 + 1 + j * rowSize];
             }
 
@@ -68,7 +118,6 @@ function FluidField() {
         x[maxEdge] = 0.5 * (x[1 + maxEdge] + x[height * rowSize]);
         x[(width + 1)] = 0.5 * (x[width] + x[(width + 1) + rowSize]);
         x[(width + 1) + maxEdge] = 0.5 * (x[width + maxEdge] + x[(width + 1) + height * rowSize]);
-
     }
 
     function lin_solve(b, x, x0, a, c) {
@@ -288,7 +337,7 @@ function FluidField() {
         uiCallback(new Field(d, u, v));
     }
 
-    this.update = function() {9
+    this.update = function() {
         queryUI(dens_prev, u_prev, v_prev);
         // insert fire physics here
         vel_step(u, v, u_prev, v_prev, dt);
