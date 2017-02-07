@@ -1,12 +1,18 @@
-function Field() {
-    this.length = 0;
-    this.width = 0;
-    this.boundaries = []; // obstacles dans le champs
-    this.iterations = 0; // nombre total d'iterations effectuées depuis le lancement de la simulation
+function Simulation() {
+    this.cycles = 0; // nombre total d'iterations effectuées depuis le lancement de la simulation
     this.isPaused = true;
-    this.userActions = []; // influence de l'utilisateur pas encore pris en compte (remis a vide quand pris en compte par la simulation)
+    this.stepDuration = 0.1;
+    this.solverIterations = 10;
+    this.fields = [];
 
-    this.startSimulation = function() {
+    // 1 simulation = 1 ensemble de field
+    // c'est la simulation qui sait où sont placer les fields dans l'univers du jeu
+    // les fields eux-mêmes sont totalement ignorant de ce qui se passe en dehors de leurs bordures
+    // c'est la simulation qui choisie de déplacer un field par exemple en fonction de la position des curseurs / sources
+    // c'est la simulation qui controle la position des sources et des obstacles
+    // 1 field ne contient que l'information de sont fluid
+
+    this.start = function() {
         if (!this.isPaused) {
             console.log("The simulation is already running.");
             return;
@@ -15,7 +21,7 @@ function Field() {
         this.simulationLoop();
     }
 
-    this.pauseSimulation = function() {
+    this.pause = function() {
         if (this.isPaused) {
             console.log("The simulation is already paused.");
             return;
@@ -23,273 +29,51 @@ function Field() {
         this.isPaused = true;
     }
 
-
     this.ui = function() {
         return // renvoie un object permettant à d'indiquer les actions de l'utilisateur > impact userActions
     }
-
-    this.fluidSolver = require('fluidSolver')(u,v,d) // récupère fluidsolver dans un autre fichier plutôt que de le mélanger avec
-    // dans ce fluidsolver les fields u, v et d doivent être les mêmes pour les manipuler directement
 
     this.simulationLoop = function() {
         if (this.isPaused) {
             return;
         }
 
-        this.applyUserActions();
-        this.applyPhysics();
-        this.fluidSolver();
+        this.fields.forEach(field => {
+            this.applyUserActions(field);
+            this.applyPhysics(field);
+            field.fluidSolver.nextStep();
+        })
 
-        this.iterations++;
+        this.cycles++;
         setTimeout(function() {
             this.simulationLoop()
         }, 0);
     }
-
-    simulationLoop();
 }
 
+function Field(w, h) {
+    this.height = 0;
+    this.width = 0;
+    this.boundaries = []; // obstacles dans le champs
+    this.size = (width + 2) * (height + 2); // TODO les + 2 disparaitrons quand les bords ne seront plus systématiques
+
+    this.u = [...Array(this.size)].fill(0);
+    this.v = [...Array(this.size)].fill(0);
+    this.d = [...Array(this.size)].fill(0);
+    this.u0 = [...Array(this.size)].fill(0);
+    this.v0 = [...Array(this.size)].fill(0);
+    this.d0 = [...Array(this.size)].fill(0);
+
+    this.visc = 0;
+    this.diff = 0;
+
+    this.fluidSolver = new fluidSolver(this);
+}
+
+
+
 function FluidField() {
-    function addFields(x, s, dt) {
-        for (var i = 0; i < size; i++) x[i] += dt * s[i];
-    }
 
-    function set_bnd(b, x) {
-        if (b === 1) {
-            for (var i = 40; i <= 50; i++) {
-                x[i + (40 + 1) * rowSize] = x[i + (39 + 1) * rowSize];
-                x[i + (50 + 1) * rowSize] = x[i + (51 + 1) * rowSize];
-            }
-            for (var j = 40; i <= 50; i++) {
-                x[40 + 1 + j * rowSize] = -x[39 + 1 + j * rowSize];
-                x[50 + 1 + j * rowSize] = -x[51 + 1 + j * rowSize];
-            }
-
-            for (var i = 1; i <= width; i++) {
-                x[i] = x[i + rowSize];
-                x[i + (height + 1) * rowSize] = x[i + height * rowSize];
-            }
-
-            for (var j = 1; i <= height; i++) {
-                x[j * rowSize] = -x[1 + j * rowSize];
-                x[(width + 1) + j * rowSize] = -x[width + j * rowSize];
-            }
-        } else if (b === 2) {
-            for (var i = 40; i <= 50; i++) {
-                x[i + (40 + 1) * rowSize] = -x[i + (39 + 1) * rowSize];
-                x[i + (50 + 1) * rowSize] = -x[i + (51 + 1) * rowSize];
-            }
-            for (var j = 40; i <= 50; i++) {
-                x[40 + 1 + j * rowSize] = x[39 + 1 + j * rowSize];
-                x[50 + 1 + j * rowSize] = x[51 + 1 + j * rowSize];
-            }
-
-            for (var i = 1; i <= width; i++) {
-                x[i] = -x[i + rowSize];
-                x[i + (height + 1) * rowSize] = -x[i + height * rowSize];
-            }
-
-            for (var j = 1; j <= height; j++) {
-                x[j * rowSize] = x[1 + j * rowSize];
-                x[(width + 1) + j * rowSize] = x[width + j * rowSize];
-            }
-        } else {
-            for (var i = 40; i <= 50; i++) {
-                x[i + (40 + 1) * rowSize] = x[i + (39 + 1) * rowSize];
-                x[i + (50 + 1) * rowSize] = x[i + (51 + 1) * rowSize];
-            }
-            for (var j = 40; i <= 50; i++) {
-                x[40 + 1 + j * rowSize] = x[39 + 1 + j * rowSize];
-                x[50 + 1 + j * rowSize] = x[51 + 1 + j * rowSize];
-            }
-
-            for (var i = 1; i <= width; i++) {
-                x[i] = x[i + rowSize];
-                x[i + (height + 1) * rowSize] = x[i + height * rowSize];
-            }
-
-            for (var j = 1; j <= height; j++) {
-                x[j * rowSize] = x[1 + j * rowSize];
-                x[(width + 1) + j * rowSize] = x[width + j * rowSize];
-            }
-        }
-        var maxEdge = (height + 1) * rowSize;
-        x[0] = 0.5 * (x[1] + x[rowSize]);
-        x[maxEdge] = 0.5 * (x[1 + maxEdge] + x[height * rowSize]);
-        x[(width + 1)] = 0.5 * (x[width] + x[(width + 1) + rowSize]);
-        x[(width + 1) + maxEdge] = 0.5 * (x[width + maxEdge] + x[(width + 1) + height * rowSize]);
-    }
-
-    function lin_solve(b, x, x0, a, c) {
-        if (a === 0 && c === 1) {
-            for (var j = 1; j <= height; j++) {
-                var currentRow = j * rowSize;
-                ++currentRow;
-                for (var i = 0; i < width; i++) {
-                    x[currentRow] = x0[currentRow];
-                    ++currentRow;
-                }
-            }
-            set_bnd(b, x);
-        } else {
-            var invC = 1 / c;
-            for (var k = 0; k < iterations; k++) {
-                for (var j = 1; j <= height; j++) {
-                    var lastRow = (j - 1) * rowSize;
-                    var currentRow = j * rowSize;
-                    var nextRow = (j + 1) * rowSize;
-                    var lastX = x[currentRow];
-                    ++currentRow;
-                    for (var i = 1; i <= width; i++)
-                        lastX = x[currentRow] = (x0[currentRow] + a * (lastX + x[++currentRow] + x[++lastRow] + x[++nextRow])) * invC;
-                }
-                set_bnd(b, x);
-            }
-        }
-    }
-
-    function diffuse(b, x, x0, dt) {
-        var a = 0;
-        lin_solve(b, x, x0, a, 1 + 4 * a);
-    }
-
-    function lin_solve2(x, x0, y, y0, a, c) {
-        if (a === 0 && c === 1) {
-            for (var j = 1; j <= height; j++) {
-                var currentRow = j * rowSize;
-                ++currentRow;
-                for (var i = 0; i < width; i++) {
-                    x[currentRow] = x0[currentRow];
-                    y[currentRow] = y0[currentRow];
-                    ++currentRow;
-                }
-            }
-            set_bnd(1, x);
-            set_bnd(2, y);
-        } else {
-            var invC = 1 / c;
-            for (var k = 0; k < iterations; k++) {
-                for (var j = 1; j <= height; j++) {
-                    var lastRow = (j - 1) * rowSize;
-                    var currentRow = j * rowSize;
-                    var nextRow = (j + 1) * rowSize;
-                    var lastX = x[currentRow];
-                    var lastY = y[currentRow];
-                    ++currentRow;
-                    for (var i = 1; i <= width; i++) {
-                        lastX = x[currentRow] = (x0[currentRow] + a * (lastX + x[currentRow] + x[lastRow] + x[nextRow])) * invC;
-                        lastY = y[currentRow] = (y0[currentRow] + a * (lastY + y[++currentRow] + y[++lastRow] + y[++nextRow])) * invC;
-                    }
-                }
-                set_bnd(1, x);
-                set_bnd(2, y);
-            }
-        }
-    }
-
-    function diffuse2(x, x0, y, y0, dt) {
-        var a = 0;
-        lin_solve2(x, x0, y, y0, a, 1 + 4 * a);
-    }
-
-    function advect(b, d, d0, u, v, dt) {
-        var Wdt0 = dt * width;
-        var Hdt0 = dt * height;
-        var Wp5 = width + 0.5;
-        var Hp5 = height + 0.5;
-        for (var j = 1; j <= height; j++) {
-            var pos = j * rowSize;
-            for (var i = 1; i <= width; i++) {
-                var x = i - Wdt0 * u[++pos];
-                var y = j - Hdt0 * v[pos];
-                if (x < 0.5)
-                    x = 0.5;
-                else if (x > Wp5)
-                    x = Wp5;
-                var i0 = x | 0;
-                var i1 = i0 + 1;
-                if (y < 0.5)
-                    y = 0.5;
-                else if (y > Hp5)
-                    y = Hp5;
-                var j0 = y | 0;
-                var j1 = j0 + 1;
-                var s1 = x - i0;
-                var s0 = 1 - s1;
-                var t1 = y - j0;
-                var t0 = 1 - t1;
-                var row1 = j0 * rowSize;
-                var row2 = j1 * rowSize;
-                d[pos] = s0 * (t0 * d0[i0 + row1] + t1 * d0[i0 + row2]) + s1 * (t0 * d0[i1 + row1] + t1 * d0[i1 + row2]);
-            }
-        }
-        set_bnd(b, d);
-    }
-
-    function project(u, v, p, div) {
-        var h = -0.5 / Math.sqrt(width * height);
-        for (var j = 1; j <= height; j++) {
-            var row = j * rowSize;
-            var previousRow = (j - 1) * rowSize;
-            var prevValue = row - 1;
-            var currentRow = row;
-            var nextValue = row + 1;
-            var nextRow = (j + 1) * rowSize;
-            for (var i = 1; i <= width; i++) {
-                div[++currentRow] = h * (u[++nextValue] - u[++prevValue] + v[++nextRow] - v[++previousRow]);
-                p[currentRow] = 0;
-            }
-        }
-        set_bnd(0, div);
-        set_bnd(0, p);
-
-        lin_solve(0, p, div, 1, 4);
-        var wScale = 0.5 * width;
-        var hScale = 0.5 * height;
-        for (var j = 1; j <= height; j++) {
-            var prevPos = j * rowSize - 1;
-            var currentPos = j * rowSize;
-            var nextPos = j * rowSize + 1;
-            var prevRow = (j - 1) * rowSize;
-            var currentRow = j * rowSize;
-            var nextRow = (j + 1) * rowSize;
-
-            for (var i = 1; i <= width; i++) {
-                u[++currentPos] -= wScale * (p[++nextPos] - p[++prevPos]);
-                v[currentPos] -= hScale * (p[++nextRow] - p[++prevRow]);
-            }
-        }
-        set_bnd(1, u);
-        set_bnd(2, v);
-    }
-
-    function dens_step(x, x0, u, v, dt) {
-        addFields(x, x0, dt);
-        diffuse(0, x0, x, dt);
-        advect(0, x, x0, u, v, dt);
-    }
-
-    function vel_step(u, v, u0, v0, dt) {
-        addFields(u, u0, dt);
-        addFields(v, v0, dt);
-        var temp = u0;
-        u0 = u;
-        u = temp;
-        var temp = v0;
-        v0 = v;
-        v = temp;
-        diffuse2(u, u0, v, v0, dt);
-        project(u, v, u0, v0);
-        var temp = u0;
-        u0 = u;
-        u = temp;
-        var temp = v0;
-        v0 = v;
-        v = temp;
-        advect(1, u, u0, u0, v0, dt);
-        advect(2, v, v0, u0, v0, dt);
-        project(u, v, u0, v0);
-    }
 
     var uiCallback;
 
@@ -340,8 +124,7 @@ function FluidField() {
     this.update = function() {
         queryUI(dens_prev, u_prev, v_prev);
         // insert fire physics here
-        vel_step(u, v, u_prev, v_prev, dt);
-        dens_step(dens, dens_prev, u, v, dt);
+        this.fluidSolver.nextStep();
         displayFunc(new Field(dens, u, v));
 
         // don't know if necessary or even a good idea to do that:
@@ -405,4 +188,17 @@ function FluidField() {
         return false;
     }
     this.setResolution(64, 64);
+
+    this.fluidSolver = new FluidSolver({
+        d: dens,
+        u: u,
+        v: v,
+        d0: dens_prev,
+        u0: u_prev,
+        v0: v_prev,
+        width: width,
+        height: height,
+        diff: 0,
+        visc: 0
+    });
 }
