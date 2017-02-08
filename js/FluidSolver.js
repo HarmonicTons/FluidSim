@@ -6,21 +6,36 @@
  * Adapted to JavaScript by Thomas Roncin.
  */
 
-function FluidSolver(field, iterations = 10) {
-    this.field = field;
+
+
+ /**
+  * Create a fluid solver
+  * Use .nextStep() to solve and update the fluid field.
+  * @param {Number} w width of the area
+  * @param {Number} h height of the area
+  * @param {Array} d field of density
+  * @param {Array} u field of x-velocity
+  * @param {Array} v field of y-velocity
+  * @param {Array} d0 influence on the field of density to take into account
+  * @param {Array} u0 influence on the field of x-velocity to take into account
+  * @param {Array} v0 influence on the field of y-velocity to take into account
+  * @param {Number} diff diffusion rate
+  * @param {Number} visc viscosity
+  */
+function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
 
     /**
      * Update the field by solving the next step
      * @param {Number} dt step's duration
      */
     this.nextStep = function(dt = 0.1) {
-        let field = this.field;
-        dens_step(field.d, field.d0, field.u, field.v, field.diff, dt);
-        vel_step(field.u, field.v, field.u0, field.v0, field.visc, dt);
+        dens_step(d, d0, u, v, diff, dt);
+        vel_step(u, v, u0, v0, visc, dt);
+        [d0,u0,v0].forEach(x => x.fill(0));
     }
 
     // Size and Index
-    let N = field.width; // TODO adapt to a non square shape field
+    let N = w; // TODO adapt to a non square shape field
     let IX = (i, j) => i + (N + 2) * j;
 
     /**

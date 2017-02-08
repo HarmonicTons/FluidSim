@@ -20,17 +20,7 @@ var frames = 0;
 
 
 function prepareFrame(field) {
-    for (let x = 0; x < field.width(); x++) {
-        for (let y = 0; y < field.height() ; y++) {
-            let d = field.getDensity(x, y)
-            let p = d*1.5;
-            field.setDensity(x, y, -p);
-            let r = 1;
-            let rng = Math.random() * r - r/2;
-                field.setVelocity(x, y, rng, -Math.pow(d/100,0.4)/1.2);
 
-        }
-    }
     if ((omx >= 0 && omx < displaySize && omy >= 0 && omy < displaySize) && mouseIsDown) {
         var dx = mx - omx;
         var dy = my - omy;
