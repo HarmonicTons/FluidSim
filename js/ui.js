@@ -19,11 +19,11 @@ var start = new Date;
 var frames = 0;
 
 
-function prepareFrame(field) {
-    for (let x = 0; x < displaySize; x++) {
-        for (let y = 0; y < displaySize; y++) {
-            let d = Math.min(field.getDensity(x, y) - 0.01, 0);
-            field.setDensity(x, y, d);
+function prepareFrame(field, prev) {
+    for (let x = 0; x < field.width(); x++) {
+        for (let y = 0; y < field.height(); y++) {
+            let p = Math.min(prev.getDensity(x,y), 0.3);
+            field.setDensity(x, y, - p);
         }
     }
     if ((omx >= 0 && omx < displaySize && omy >= 0 && omy < displaySize) && mouseIsDown) {
@@ -32,19 +32,19 @@ function prepareFrame(field) {
         var length = (Math.sqrt(dx * dx + dy * dy) + 0.5) | 0;
         if (length < 1) length = 1;
         for (var i = 0; i < length; i++) {
-            var x = (((omx + dx * (i / length)) / displaySize) * field.width()) | 0
+            var x = (((omx + dx * (i / length)) / displaySize) * field.width()) | 0;
             var y = (((omy + dy * (i / length)) / displaySize) * field.height()) | 0;
             field.setVelocity(x, y, dx, dy);
-            field.setDensity(x, y, 50);
+            field.setDensity(x, y, 100);
         }
         omx = mx;
         omy = my;
-    }
+    }/*
     for (var i = 0; i < sources.length; i++) {
         var x = ((sources[i][0] / displaySize) * field.width()) | 0;
         var y = ((sources[i][1] / displaySize) * field.height()) | 0;
         field.setDensity(x, y, 50);
-    }
+    }*/
 
 }
 
@@ -65,7 +65,10 @@ function updateFrame() {
     var end = new Date;
     frames++;
     if ((end - start) > 1000) {
-        console.log("FPS: " + ((1000 * frames / (end - start) + 0.5) | 0));
+        document.getElementById("fps").innerHTML = "FPS: " + ((1000 * frames / (end - start) + 0.5) | 0);
+        let fieldInfo =  field.getFieldInfo();
+        document.getElementById("avg").innerHTML = fieldInfo.getAvgDensity().toFixed(3);
+        document.getElementById("max").innerHTML = fieldInfo.getMaxDensity().toFixed(3);
         start = end;
         frames = 0;
     }

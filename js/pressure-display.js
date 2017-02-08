@@ -43,20 +43,31 @@ if (this.CanvasRenderingContext2D && !CanvasRenderingContext2D.createImageData) 
             var data = bufferData.data;
             var dlength = data.length;
             var j = -3;
-            if (clampData) {
-                for (var x = 0; x < width; x++) {
-                    for (var y = 0; y < height; y++) {
-                        var d = field.getDensity(x, y) * 255 / 5;
-                        d = d | 0;
-                        if (d > 255)
-                            d = 255;
-                        data[4 * (y * height + x) + 1] = d;
+
+            for (var x = 0; x < width; x++) {
+                for (var y = 0; y < height; y++) {
+                    let c = field.getDensity(x, y);
+                    if (c >= 10) {
+                        data[((y * (height * 4)) + (x * 4)) + 3] = 255;
+                        data[((y * (height * 4)) + (x * 4)) + 2] = 255;
+                        data[((y * (height * 4)) + (x * 4)) + 1] = 255;
+                        data[((y * (height * 4)) + (x * 4)) + 0] = 255;
+                    } else if (c >= 3) {
+                        data[((y * (height * 4)) + (x * 4)) + 3] = 255;
+                        data[((y * (height * 4)) + (x * 4)) + 2] = 0;
+                        data[((y * (height * 4)) + (x * 4)) + 1] = 165;
+                        data[((y * (height * 4)) + (x * 4)) + 0] = 255;
+                    } else if (c >= 1) {
+                        data[((y * (height * 4)) + (x * 4)) + 3] = 255;
+                        data[((y * (height * 4)) + (x * 4)) + 2] = 0;
+                        data[((y * (height * 4)) + (x * 4)) + 1] = 55;
+                        data[((y * (height * 4)) + (x * 4)) + 0] = 255;
+                    } else {
+                        data[((y * (height * 4)) + (x * 4)) + 3] = 255;
+                        data[((y * (height * 4)) + (x * 4)) + 2] = 0;
+                        data[((y * (height * 4)) + (x * 4)) + 1] = 0;
+                        data[((y * (height * 4)) + (x * 4)) + 0] = 0;
                     }
-                }
-            } else {
-                for (var x = 0; x < width; x++) {
-                    for (var y = 0; y < height; y++)
-                        data[4 * (y * height + x) + 1] = field.getDensity(x, y) * 255 / 5;
                 }
             }
             context.putImageData(bufferData, 0, 0);
@@ -69,6 +80,12 @@ if (this.CanvasRenderingContext2D && !CanvasRenderingContext2D.createImageData) 
                 }
             }
         }
+
+
+        canvasZoom = canvasZoom || document.getElementById("canvasZoom");
+        let ctxZoom = canvasZoom.getContext("2d");
+        ctxZoom.imageSmoothingEnabled = false;
+        ctxZoom.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, canvasZoom.width, canvasZoom.height);
     }
 
     function displayVelocity(field) {
@@ -91,6 +108,12 @@ if (this.CanvasRenderingContext2D && !CanvasRenderingContext2D.createImageData) 
         }
         context.stroke();
         context.restore();
+
+        canvasZoom = canvasZoom || document.getElementById("canvasZoom");
+        let ctxZoom = canvasZoom.getContext("2d");
+        ctxZoom.imageSmoothingEnabled = false;
+        ctxZoom.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, canvasZoom.width, canvasZoom.height);
+
     }
     var showVectors = false;
     toggleDisplayFunction = function(canvas) {

@@ -223,6 +223,12 @@ function FluidField() {
         this.getDensity = function(x, y) {
             return dens[(x + 1) + (y + 1) * rowSize];
         }
+        this.getAvgDensity = function() {
+            return dens.reduce((s, c) => s + c, 0) / dens.length;
+        }
+        this.getMaxDensity = function() {
+            return dens.reduce((m, c) => c > m ? c : m);
+        }
         this.setVelocity = function(x, y, xv, yv) {
             u[(x + 1) + (y + 1) * rowSize] = xv;
             v[(x + 1) + (y + 1) * rowSize] = yv;
@@ -241,14 +247,19 @@ function FluidField() {
         }
     }
 
-    function queryUI(d, u, v) {
+    this.getFieldInfo = function() {
+        return new Field(dens, u, v);
+    }
+
+    function queryUI(d, u, v, f) {
         for (var i = 0; i < size; i++)
             u[i] = v[i] = d[i] = 0.0;
-        uiCallback(new Field(d, u, v));
+        uiCallback(new Field(d, u, v), f);
     }
 
     this.update = function() {
-        queryUI(dens_prev, u_prev, v_prev);
+        let f = new Field(dens, u, v);
+        queryUI(dens_prev, u_prev, v_prev, f);
         vel_step(u, v, u_prev, v_prev, dt);
         dens_step(dens, dens_prev, u, v, dt);
         displayFunc(new Field(dens, u, v));
@@ -256,6 +267,7 @@ function FluidField() {
     this.setDisplayFunction = function(func) {
         displayFunc = func;
     }
+
 
     this.iterations = function() {
         return iterations;

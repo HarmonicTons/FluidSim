@@ -11,7 +11,10 @@
 
 <body>
     <canvas id="canvas"></canvas>
-    <div id="log">FPS: 77</div>
+    <canvas id="canvasZoom" width="512" height="512"></canvas>
+    <div id="fps"></div>
+    <div id="max"></div>
+    <div id="avg"></div>
     <button onclick="startAnimation()">start</button>
     <button onclick="stopAnimation()">stop</button>
     <button onclick="field.reset(); frames = 0; sources = [];">reset</button><br>
