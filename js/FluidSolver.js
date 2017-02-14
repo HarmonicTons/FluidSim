@@ -33,16 +33,15 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
     };
 
     // Size and Index
-    let N = w; // TODO adapt to a non square shape field
-    let IX = (i, j) => i + (N + 2) * j;
+    let IX = (i, j) => i + (w + 2) * j;
 
     /**
      * For each cell
      * @param {Function} forStep
      */
     function FOR_EACH_CELL(forStep) {
-        for (let i = 1; i <= N; i++) {
-            for (let j = 1; j <= N; j++) {
+        for (let i = 1; i <= w; i++) {
+            for (let j = 1; j <= h; j++) {
                 forStep(i, j);
             }
         }
@@ -55,7 +54,7 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
      * @param {Number} dt
      */
     function add_source(x, s, dt) {
-        let size = (N + 2) * (N + 2);
+        let size = (w + 2) * (h + 2);
         for (let i = 0; i < size; i++) {
             x[i] += dt * s[i];
         }
@@ -69,7 +68,7 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
     function set_bnd(b, x) {
 
         // TODO adapt to field.boundaries;
-
+        /*
         for (let i = 1; i <= N; i++) {
             x[IX(0, i)] = b == 1 ? -x[IX(1, i)] : x[IX(1, i)];
             x[IX(N + 1, i)] = b == 1 ? -x[IX(N, i)] : x[IX(N, i)];
@@ -80,6 +79,7 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
         x[IX(0, N + 1)] = 0.5 * (x[IX(1, N + 1)] + x[IX(0, N)]);
         x[IX(N + 1, 0)] = 0.5 * (x[IX(N, 0)] + x[IX(N + 1, 1)]);
         x[IX(N + 1, N + 1)] = 0.5 * (x[IX(N, N + 1)] + x[IX(N + 1, N)]);
+        */
     }
 
     /**
@@ -109,7 +109,7 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
      * @param {Number} dt
      */
     function diffuse(b, x, x0, diff, dt) {
-        let a = dt * diff * N * N;
+        let a = dt * diff * w * h;
         lin_solve(b, x, x0, a, 1 + 4 * a);
     }
 
@@ -123,18 +123,18 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
      * @param {Number} dt
      */
     function advect(b, d, d0, u, v, dt) {
-        let dt0 = dt * N;
+        let dt0 = dt * Math.sqrt(w*h);
         FOR_EACH_CELL((i, j) => {
             let x = i - dt0 * u[IX(i, j)];
             let y = j - dt0 * v[IX(i, j)];
 
             if (x < 0.5) x = 0.5;
-            if (x > N + 0.5) x = N + 0.5;
+            if (x > w + 0.5) x = w + 0.5;
             let i0 = parseInt(x);
             let i1 = i0 + 1;
 
             if (y < 0.5) y = 0.5;
-            if (y > N + 0.5) y = N + 0.5;
+            if (y > h + 0.5) y = h + 0.5;
             let j0 = parseInt(y);
             let j1 = j0 + 1;
 
@@ -157,7 +157,7 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
      */
     function project(u, v, p, div) {
         FOR_EACH_CELL((i, j) => {
-            div[IX(i, j)] = -0.5 * (u[IX(i + 1, j)] - u[IX(i - 1, j)] + v[IX(i, j + 1)] - v[IX(i, j - 1)]) / N;
+            div[IX(i, j)] = -0.5 * (u[IX(i + 1, j)] - u[IX(i - 1, j)] + v[IX(i, j + 1)] - v[IX(i, j - 1)]) / Math.sqrt(w*h);
             p[IX(i, j)] = 0;
         });
         set_bnd(0, div);
@@ -166,8 +166,8 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
         lin_solve(0, p, div, 1, 4);
 
         FOR_EACH_CELL((i, j) => {
-            u[IX(i, j)] -= 0.5 * N * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
-            v[IX(i, j)] -= 0.5 * N * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
+            u[IX(i, j)] -= 0.5 * Math.sqrt(w*h) * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
+            v[IX(i, j)] -= 0.5 * Math.sqrt(w*h) * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
         });
         set_bnd(1, u);
         set_bnd(2, v);

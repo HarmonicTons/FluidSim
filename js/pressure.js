@@ -164,7 +164,7 @@ function FluidField() {
     }
 
     this.update = function() {
-        applyPhysics(); // modify x_prev according to dens u et v
+        //applyPhysics(); // modify x_prev according to dens u et v
         uiCallback(new Field(dens_prev, u_prev, v_prev)); // modify x_prev according to user actions
         this.fluidSolver.nextStep();
         displayFunc(new Field(dens, u, v));
@@ -200,7 +200,7 @@ function FluidField() {
     var displayFunc;
 
     function reset() {
-        rowSize = width + 2;
+        rowSize = width+2;
         size = (width + 2) * (height + 2);
         dens = new Array(size);
         dens_prev = new Array(size);
@@ -213,16 +213,12 @@ function FluidField() {
     }
     this.reset = reset;
     this.setResolution = function(hRes, wRes) {
-        var res = wRes * hRes;
-        if (res > 0 && res < 1000000 && (wRes != width || hRes != height)) {
-            width = wRes;
-            height = hRes;
-            reset();
-            return true;
-        }
-        return false;
-    };
-    this.setResolution(64, 64);
+        width = wRes;
+        height = hRes;
 
-    this.fluidSolver = new FluidSolver(width, height, dens, u, v, dens_prev, u_prev, v_prev, 0, 0);
+        reset();
+        this.fluidSolver = new FluidSolver(width, height, dens, u, v, dens_prev, u_prev, v_prev, 0, 0);
+    };
+
+
 }
