@@ -1,6 +1,7 @@
-onmouseup = function() {
+// HACK: lol wtf 
+window.onmouseup = function() {
     mouseIsDown = false;
-}
+};
 
 
 var frames = 0;
@@ -109,8 +110,8 @@ window.onload = function() {
     updateRes();
 
     canvas.onmousedown = function(event) {
-        omx = mx = event.layerX;
-        omy = my = event.layerY;
+        omx = mx = event.offsetX;
+        omy = my = event.offsetY;
         if (!event.altKey && event.button == 0)
             mouseIsDown = true;
         else
@@ -119,8 +120,8 @@ window.onload = function() {
         return false;
     }
     canvas.onmousemove = function(event) {
-        mx = event.layerX;
-        my = event.layerY;
+        mx = event.offsetX;
+        my = event.offsetY;
     }
     field.setDisplayFunction(toggleDisplayFunction(canvas));
     startAnimation();
