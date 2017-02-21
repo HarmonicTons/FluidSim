@@ -164,7 +164,7 @@ function FluidField() {
     }
 
     this.update = function() {
-        //applyPhysics(); // modify x_prev according to dens u et v
+        applyPhysics(); // modify x_prev according to dens u et v
         uiCallback(new Field(dens_prev, u_prev, v_prev)); // modify x_prev according to user actions
         this.fluidSolver.nextStep();
         displayFunc(new Field(dens, u, v));

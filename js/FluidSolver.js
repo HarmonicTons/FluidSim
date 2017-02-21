@@ -20,32 +20,17 @@
  * @param {Number} diff diffusion rate
  * @param {Number} visc viscosity
  */
-function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
+let fluidSolver = {
 
     /**
      * Update the field by solving the next step
      * @param {Number} dt step's duration
      */
-    this.nextStep = function(dt = 0.1) {
-        dens_step(d, d0, u, v, diff, dt);
-        vel_step(u, v, u0, v0, visc, dt);
+    nextStep: function(w, h, d, u, v, d0, u0, v0, bnds = [], diff = 0, visc = 0, dt = 0.1, iterations = 10) {
+        this.dens_step(d, d0, u, v, diff, dt, w, h, bnds, iterations);
+        this.vel_step(u, v, u0, v0, visc, dt, w, h, bnds, iterations);
         [d0, u0, v0].forEach(x => x.fill(0));
-    };
-
-    // Size and Index
-    let IX = (i, j) => i + (w + 2) * j;
-
-    /**
-     * For each cell
-     * @param {Function} forStep
-     */
-    function FOR_EACH_CELL(forStep) {
-        for (let i = 1; i <= w; i++) {
-            for (let j = 1; j <= h; j++) {
-                forStep(i, j);
-            }
-        }
-    }
+    },
 
     /**
      * Add source
@@ -53,34 +38,45 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
      * @param {Array} s
      * @param {Number} dt
      */
-    function add_source(x, s, dt) {
+    add_source: function(x, s, dt, w, h) {
         let size = (w + 2) * (h + 2);
         for (let i = 0; i < size; i++) {
             x[i] += dt * s[i];
         }
-    }
+    },
 
     /**
      * Set boundaries
      * @param {Number} b
      * @param {Array} x
+     * @param {Object[]} bnds boundaries {x,y,w,h} w & h >= 5
      */
-    function set_bnd(b, x) {
+    set_bnd: function(b, x, w, bnds) {
+        let IX = (i, j) => i + (w + 2) * j;
 
-        // TODO adapt to field.boundaries;
-        /*
-        for (let i = 1; i <= N; i++) {
-            x[IX(0, i)] = b == 1 ? -x[IX(1, i)] : x[IX(1, i)];
-            x[IX(N + 1, i)] = b == 1 ? -x[IX(N, i)] : x[IX(N, i)];
-            x[IX(i, 0)] = b == 2 ? -x[IX(i, 1)] : x[IX(i, 1)];
-            x[IX(i, N + 1)] = b == 2 ? -x[IX(i, N)] : x[IX(i, N)];
-        }
-        x[IX(0, 0)] = 0.5 * (x[IX(1, 0)] + x[IX(0, 1)]);
-        x[IX(0, N + 1)] = 0.5 * (x[IX(1, N + 1)] + x[IX(0, N)]);
-        x[IX(N + 1, 0)] = 0.5 * (x[IX(N, 0)] + x[IX(N + 1, 1)]);
-        x[IX(N + 1, N + 1)] = 0.5 * (x[IX(N, N + 1)] + x[IX(N + 1, N)]);
-        */
-    }
+        if (bnds.length == 0) return;
+        bnds.forEach(bnd => {
+            for (let i = 1; i < bnd.w - 1; i++) {
+                x[IX(bnd.x + i, bnd.y)] = b == 2 ? -x[IX(bnd.x + i, bnd.y - 1)] : x[IX(bnd.x + i, bnd.y - 1)];
+                x[IX(bnd.x + i, bnd.y + bnd.h - 1)] = b == 2 ? -x[IX(bnd.x + i, bnd.y + bnd.h)] : x[IX(bnd.x + i, bnd.y + bnd.h)];
+            }
+            for (let i = 1; i < bnd.h - 1; i++) {
+                x[IX(bnd.x, bnd.y + i)] = b == 1 ? -x[IX(bnd.x - 1, bnd.y + i)] : x[IX(bnd.x - 1, bnd.y + i)];
+                x[IX(bnd.x + bnd.w - 1, bnd.y + i)] = b == 1 ? -x[IX(bnd.x + bnd.w, bnd.y + i)] : x[IX(bnd.x + bnd.w, bnd.y + i)];
+            }
+
+            for (let i = 2; i < bnd.w - 2; i++) {
+                for (let j = 2; j < bnd.h - 2; j++) {
+                    x[IX(bnd.x + i, bnd.y + j)] = 0;
+                }
+            }
+
+            x[IX(bnd.x, bnd.y)] = 0.5 * (x[IX(bnd.x - 1, bnd.y)] + x[IX(bnd.x, bnd.y - 1)]);
+            x[IX(bnd.x, bnd.y + bnd.h - 1)] = 0.5 * (x[IX(bnd.x - 1, bnd.y + bnd.h - 1)] + x[IX(bnd.x, bnd.y + bnd.h)]);
+            x[IX(bnd.x + bnd.w - 1, bnd.y)] = 0.5 * (x[IX(bnd.x + bnd.w, bnd.y - 1)] + x[IX(bnd.x + bnd.w - 1, bnd.y)]);
+            x[IX(bnd.x + bnd.w - 1, bnd.y + bnd.h - 1)] = 0.5 * (x[IX(bnd.x + bnd.w, bnd.y + bnd.h - 1)] + x[IX(bnd.x + bnd.w - 1, bnd.y + bnd.h)]);
+        });
+    },
 
     /**
      * Linear solver
@@ -90,15 +86,19 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
      * @param {Number} a
      * @param {Number} c
      */
-    function lin_solve(b, x, x0, a, c) {
+    lin_solve: function(b, x, x0, a, c, w, bnds, iterations) {
+        let IX = (i, j) => i + (w + 2) * j;
+
         let kMax = iterations;
         for (let k = 0; k < kMax; k++) {
-            FOR_EACH_CELL((i, j) => {
-                x[IX(i, j)] = (x0[IX(i, j)] + a * (x[IX(i - 1, j)] + x[IX(i + 1, j)] + x[IX(i, j - 1)] + x[IX(i, j + 1)])) / c;
-            });
-            set_bnd(b, x);
+            for (let i = 1; i <= w; i++) {
+                for (let j = 1; j <= h; j++) {
+                    x[IX(i, j)] = (x0[IX(i, j)] + a * (x[IX(i - 1, j)] + x[IX(i + 1, j)] + x[IX(i, j - 1)] + x[IX(i, j + 1)])) / c;
+                }
+            }
+            this.set_bnd(b, x, w, bnds);
         }
-    }
+    },
 
     /**
      * Diffuse
@@ -108,10 +108,10 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
      * @param {Number} diff
      * @param {Number} dt
      */
-    function diffuse(b, x, x0, diff, dt) {
+    diffuse: function(b, x, x0, diff, dt, w, h, bnds, iterations) {
         let a = dt * diff * w * h;
-        lin_solve(b, x, x0, a, 1 + 4 * a);
-    }
+        this.lin_solve(b, x, x0, a, 1 + 4 * a, w, bnds, iterations);
+    },
 
     /**
      * Advect
@@ -122,31 +122,35 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
      * @param {Array} v
      * @param {Number} dt
      */
-    function advect(b, d, d0, u, v, dt) {
-        let dt0 = dt * Math.sqrt(w*h);
-        FOR_EACH_CELL((i, j) => {
-            let x = i - dt0 * u[IX(i, j)];
-            let y = j - dt0 * v[IX(i, j)];
+    advect: function (b, d, d0, u, v, dt, w, h, bnds) {
+        let IX = (i, j) => i + (w + 2) * j;
 
-            if (x < 0.5) x = 0.5;
-            if (x > w + 0.5) x = w + 0.5;
-            let i0 = parseInt(x);
-            let i1 = i0 + 1;
+        let dt0 = dt * Math.sqrt(w * h);
+        for (let i = 1; i <= w; i++) {
+            for (let j = 1; j <= h; j++) {
+                let x = i - dt0 * u[IX(i, j)];
+                let y = j - dt0 * v[IX(i, j)];
 
-            if (y < 0.5) y = 0.5;
-            if (y > h + 0.5) y = h + 0.5;
-            let j0 = parseInt(y);
-            let j1 = j0 + 1;
+                if (x < 0.5) x = 0.5;
+                if (x > w + 0.5) x = w + 0.5;
+                let i0 = parseInt(x);
+                let i1 = i0 + 1;
 
-            let s1 = x - i0;
-            let s0 = 1 - s1;
-            let t1 = y - j0;
-            let t0 = 1 - t1;
+                if (y < 0.5) y = 0.5;
+                if (y > h + 0.5) y = h + 0.5;
+                let j0 = parseInt(y);
+                let j1 = j0 + 1;
 
-            d[IX(i, j)] = s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) + s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
-        });
-        set_bnd(b, d);
-    }
+                let s1 = x - i0;
+                let s0 = 1 - s1;
+                let t1 = y - j0;
+                let t0 = 1 - t1;
+
+                d[IX(i, j)] = s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) + s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
+            }
+        }
+        this.set_bnd(b, d, w, bnds);
+    },
 
     /**
      * Project
@@ -155,23 +159,29 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
      * @param {Array} p
      * @param {Array} div
      */
-    function project(u, v, p, div) {
-        FOR_EACH_CELL((i, j) => {
-            div[IX(i, j)] = -0.5 * (u[IX(i + 1, j)] - u[IX(i - 1, j)] + v[IX(i, j + 1)] - v[IX(i, j - 1)]) / Math.sqrt(w*h);
-            p[IX(i, j)] = 0;
-        });
-        set_bnd(0, div);
-        set_bnd(0, p);
+    project: function(u, v, p, div, w, h, bnds, iterations) {
+        let IX = (i, j) => i + (w + 2) * j;
 
-        lin_solve(0, p, div, 1, 4);
+        for (let i = 1; i <= w; i++) {
+            for (let j = 1; j <= h; j++) {
+                div[IX(i, j)] = -0.5 * (u[IX(i + 1, j)] - u[IX(i - 1, j)] + v[IX(i, j + 1)] - v[IX(i, j - 1)]) / Math.sqrt(w * h);
+                p[IX(i, j)] = 0;
+            }
+        }
+        this.set_bnd(0, div, w, bnds);
+        this.set_bnd(0, p, w, bnds);
 
-        FOR_EACH_CELL((i, j) => {
-            u[IX(i, j)] -= 0.5 * Math.sqrt(w*h) * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
-            v[IX(i, j)] -= 0.5 * Math.sqrt(w*h) * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
-        });
-        set_bnd(1, u);
-        set_bnd(2, v);
-    }
+        this.lin_solve(0, p, div, 1, 4, w, bnds, iterations);
+
+        for (let i = 1; i <= w; i++) {
+            for (let j = 1; j <= h; j++) {
+                u[IX(i, j)] -= 0.5 * Math.sqrt(w * h) * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
+                v[IX(i, j)] -= 0.5 * Math.sqrt(w * h) * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
+            }
+        }
+        this.set_bnd(1, u, w, bnds);
+        this.set_bnd(2, v, w, bnds);
+    },
 
     /**
      * Apply density step
@@ -182,12 +192,12 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
      * @param {Number} diff diffusion rate
      * @param {Number} dt step's duration
      */
-    function dens_step(x, x0, u, v, diff, dt) {
+    dens_step: function (x, x0, u, v, diff, dt, w, h, bnds, iterations) {
         diff = 0; // FIXME a diff != 0 makes the solver diverge no matter what
-        add_source(x, x0, dt);
-        diffuse(0, x0, x, diff, dt);
-        advect(0, x, x0, u, v, dt);
-    }
+        this.add_source(x, x0, dt, w, h);
+        this.diffuse(0, x0, x, diff, dt, w, h, bnds, iterations);
+        this.advect(0, x, x0, u, v, dt, w, h, bnds);
+    },
 
     /**
      * Apply density step
@@ -198,14 +208,14 @@ function FluidSolver(w, h, d, u, v, d0, u0, v0, diff, visc, iterations = 10) {
      * @param {Number} visc viscosity
      * @param {Number} dt step's duration
      */
-    function vel_step(u, v, u0, v0, visc, dt) {
-        add_source(u, u0, dt);
-        add_source(v, v0, dt);
-        diffuse(1, u0, u, visc, dt);
-        diffuse(2, v0, v, visc, dt);
-        project(u0, v0, u, v);
-        advect(1, u, u0, u0, v0, dt);
-        advect(2, v, v0, u0, v0, dt);
-        project(u, v, u0, v0);
+    vel_step : function (u, v, u0, v0, visc, dt, w, h, bnds, iterations) {
+        this.add_source(u, u0, dt, w, h);
+        this.add_source(v, v0, dt, w, h);
+        this.diffuse(1, u0, u, visc, dt, w, h, bnds, iterations);
+        this.diffuse(2, v0, v, visc, dt, w, h, bnds, iterations);
+        this.project(u0, v0, u, v, w, h, bnds, iterations);
+        this.advect(1, u, u0, u0, v0, dt, w, h, bnds);
+        this.advect(2, v, v0, u0, v0, dt, w, h, bnds);
+        this.project(u, v, u0, v0, w, h, bnds, iterations);
     }
 }
