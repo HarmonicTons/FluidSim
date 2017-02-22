@@ -32,7 +32,7 @@
 // TODO put dt in ms (0.1 -> 100) and determine with FPS (20FPS => dt = 50 ms, 60FPS => dt = 15ms)
 
 class FluidField2 {
-    constructor(width, height, boundaries = [], diffusionRate = 0, viscosity = 0, iterations = 10, default_dt = 0.1) {
+    constructor(width, height, d, u, v, d0, u0, v0, boundaries = [], diffusionRate = 0, viscosity = 0, iterations = 10, default_dt = 0.1) {
         this.width = width;
         this.height = height;
         this.boundaries = boundaries;
@@ -41,17 +41,17 @@ class FluidField2 {
         this.viscosity = diffusionRate;
         this.iterations = iterations;
         this.default_dt = default_dt;
-        let size = width * height;
-        this.densityField = (new Array(size)).fill(0);
-        this.xVelocityField = (new Array(size)).fill(0);
-        this.yVelocityField = (new Array(size)).fill(0);
-        this.densitySourceField = (new Array(size)).fill(0);
-        this.xVelocitySourceField = (new Array(size)).fill(0);
-        this.yVelocitySourceField = (new Array(size)).fill(0);
+        let size = (width + 2) * (height + 2);
+        this.densityField = d; //(new Array(size)).fill(0);
+        this.xVelocityField = u; //(new Array(size)).fill(0);
+        this.yVelocityField = v; //(new Array(size)).fill(0);
+        this.densitySourceField = d0; //(new Array(size)).fill(0);
+        this.xVelocitySourceField = u0; //(new Array(size)).fill(0);
+        this.yVelocitySourceField = v0; //(new Array(size)).fill(0);
     }
 
     get area() {
-        return this.width * this.height;
+        return (this.width + 2) * (this.height + 2);
     }
 
     index(x, y) {
@@ -117,7 +117,7 @@ class FluidField2 {
     // with a boundariesField
     _set_bnd(b, u) {
         let bnds = this.boundaries;
-        let IX = (x,y) => x + this.width * y;
+        let IX = (x, y) => x + (this.width + 2) * y;
 
         if (bnds.length == 0) return;
         bnds.forEach(({
@@ -154,14 +154,14 @@ class FluidField2 {
     }
 
     _lin_solve(b, x, x0, a, c) {
-        let IX = (x,y) => x + this.width * y;
+        let IX = (x, y) => x + (this.width + 2) * y;
         let kMax = this.iterations;
         let w = this.width;
         let h = this.height;
 
         for (let k = 0; k < kMax; k++) {
-            for (let i = 1; i < w - 1; i++) {
-                for (let j = 1; j < h - 1; j++) {
+            for (let i = 1; i <= w; i++) {
+                for (let j = 1; j <= h; j++) {
                     x[IX(i, j)] = (x0[IX(i, j)] + a * (x[IX(i - 1, j)] + x[IX(i + 1, j)] + x[IX(i, j - 1)] + x[IX(i, j + 1)])) / c;
                 }
             }
@@ -175,13 +175,13 @@ class FluidField2 {
     }
 
     _advect(b, d, d0, u, v, dt) {
-        let IX = (x,y) => x + this.width * y;
+        let IX = (x, y) => x + (this.width + 2) * y;
         let w = this.width;
         let h = this.height;
 
         let dt0 = dt * Math.sqrt(w * h);
-        for (let i = 1; i < w - 1; i++) {
-            for (let j = 1; j < h - 1; j++) {
+        for (let i = 1; i < w; i++) {
+            for (let j = 1; j < h; j++) {
                 let x = i - dt0 * u[IX(i, j)];
                 let y = j - dt0 * v[IX(i, j)];
 
@@ -207,12 +207,12 @@ class FluidField2 {
     }
 
     _project(u, v, p, div) {
-        let IX = (x,y) => x + this.width * y;
+        let IX = (x, y) => x + (this.width + 2) * y;
         let w = this.width;
         let h = this.height;
 
-        for (let i = 1; i < w - 1; i++) {
-            for (let j = 1; j < h - 1; j++) {
+        for (let i = 1; i < w; i++) {
+            for (let j = 1; j < h; j++) {
                 div[IX(i, j)] = -0.5 * (u[IX(i + 1, j)] - u[IX(i - 1, j)] + v[IX(i, j + 1)] - v[IX(i, j - 1)]) / Math.sqrt(w * h);
                 p[IX(i, j)] = 0;
             }
@@ -222,8 +222,8 @@ class FluidField2 {
 
         this._lin_solve(0, p, div, 1, 4);
 
-        for (let i = 1; i < w - 1; i++) {
-            for (let j = 1; j < h - 1; j++) {
+        for (let i = 1; i < w; i++) {
+            for (let j = 1; j < h; j++) {
                 u[IX(i, j)] -= 0.5 * Math.sqrt(w * h) * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
                 v[IX(i, j)] -= 0.5 * Math.sqrt(w * h) * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
             }
