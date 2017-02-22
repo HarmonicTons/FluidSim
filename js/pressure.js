@@ -115,10 +115,10 @@ function FluidField() {
         // Just exposing the fields here rather than using accessors is a measurable win during display (maybe 5%)
         // but makes the code ugly.
         this.setDensity = function(x, y, d) {
-            dens[(x + 1) + (y + 1) * rowSize] = d;
+            dens[x + y * rowSize] = d;
         };
         this.getDensity = function(x, y) {
-            return dens[(x + 1) + (y + 1) * rowSize];
+            return dens[x + y * rowSize];
         };
         this.getAvgDensity = function() {
             return dens.reduce((s, c) => s + c, 0) / dens.length;
@@ -127,14 +127,14 @@ function FluidField() {
             return dens.reduce((m, c) => c > m ? c : m);
         };
         this.setVelocity = function(x, y, xv, yv) {
-            u[(x + 1) + (y + 1) * rowSize] = xv;
-            v[(x + 1) + (y + 1) * rowSize] = yv;
+            u[x + y * rowSize] = xv;
+            v[x + y * rowSize] = yv;
         };
         this.getXVelocity = function(x, y) {
-            return u[(x + 1) + (y + 1) * rowSize];
+            return u[x + y * rowSize];
         };
         this.getYVelocity = function(x, y) {
-            return v[(x + 1) + (y + 1) * rowSize];
+            return v[x + y * rowSize];
         };
         this.width = function() {
             return width;
@@ -152,21 +152,22 @@ function FluidField() {
     function applyPhysics() {
         for (let x = 0; x < width; x++) {
             for (let y = 0; y < height ; y++) {
-                let d = dens[(x + 1) + (y + 1) * rowSize];
+                let d = dens[x + y * rowSize];
                 let p = d*1.5;
-                dens_prev[(x + 1) + (y + 1) * rowSize] = -p;
+                dens_prev[x + y * rowSize] = -p;
                 let r = 1;
                 let rng = Math.random() * r - r/2;
-                    u_prev[(x + 1) + (y + 1) * rowSize] = rng;
-                    v_prev[(x + 1) + (y + 1) * rowSize] = -Math.pow(d/100,0.4)/1.2;
+                    u_prev[x + y * rowSize] = rng;
+                    v_prev[x + y * rowSize] = -Math.pow(d/100,0.4)/1.2;
             }
         }
     }
 
     this.update = function() {
-        applyPhysics(); // modify x_prev according to dens u et v
+        //applyPhysics(); // modify x_prev according to dens u et v
         uiCallback(new Field(dens_prev, u_prev, v_prev)); // modify x_prev according to user actions
-        this.fluidSolver.nextStep();
+        //fluidSolver.nextStep(width, height, dens, u, v, dens_prev, u_prev, v_prev);
+        this.fluidSolver.update(0.1);
         displayFunc(new Field(dens, u, v));
     };
     this.setDisplayFunction = function(func) {
@@ -217,7 +218,13 @@ function FluidField() {
         height = hRes;
 
         reset();
-        this.fluidSolver = new FluidSolver(width, height, dens, u, v, dens_prev, u_prev, v_prev, 0, 0);
+        this.fluidSolver = new FluidField2(width, height);
+        dens = this.fluidSolver.densityField;
+        u = this.fluidSolver.xVelocityField;
+        v = this.fluidSolver.yVelocityField;
+        dens_prev = this.fluidSolver.densitySourceField;
+        u_prev = this.fluidSolver.xVelocitySourceField;
+        v_prev = this.fluidSolver.yVelocitySourceField;
     };
 
 
