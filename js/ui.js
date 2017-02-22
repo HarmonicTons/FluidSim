@@ -30,7 +30,7 @@ function prepareFrame(field) {
         for (var i = 0; i < length; i++) {
             var x = (((omx + dx * (i / length)) / w) * field.width()) | 0;
             var y = (((omy + dy * (i / length)) / h) * field.height()) | 0;
-            let radius = 3;
+            let radius = 6;
             for (let j = 0; j < 2*radius+1; j++) {
                 for (let k = 0; k < 2*radius+1; k++) {
                     let px = x + j - radius;

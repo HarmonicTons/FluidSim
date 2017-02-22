@@ -1,20 +1,12 @@
-//import {FluidSolver} from "FluidSolver";
 
 function Simulation() {
-    this.cycles = 0; // nombre total d'iterations effectuées depuis le lancement de la simulation
+    this.cycles = 0;
     this.isPaused = true;
-    this.stepDuration = 0.1; // en secondes
+    this.stepDuration = 100;
     this.solverIterations = 10;
     this.areas = [];
     this.visc = 0;
     this.diff = 0;
-
-    // 1 simulation = 1 ensemble de field
-    // c'est la simulation qui sait où sont placer les fields dans l'univers du jeu
-    // les fields eux-mêmes sont totalement ignorant de ce qui se passe en dehors de leurs bordures
-    // c'est la simulation qui choisie de déplacer un field par exemple en fonction de la position des curseurs / sources
-    // c'est la simulation qui controle la position des sources et des obstacles
-    // 1 field ne contient que l'information de sont fluid
 
     this.start = function() {
         if (!this.isPaused) {
@@ -34,7 +26,7 @@ function Simulation() {
     };
 
     this.ui = function() {
-        return ; // renvoie un object permettant d'indiquer les actions de l'utilisateur > impact userActions
+        return; // renvoie un object permettant d'indiquer les actions de l'utilisateur > impact userActions
     };
 
     this.simulationLoop = function() {
@@ -43,68 +35,36 @@ function Simulation() {
         }
 
         this.areas.forEach(area => {
-            let field;
+            let field = area.field;
             this.applyUserActions(field);
             this.applyPhysics(field);
-            field.fluidSolver.nextStep(this.stepDuration);
+            field.update();
         });
 
         this.cycles++;
         setTimeout(function() {
             this.simulationLoop();
-        }, this.stepDuration * 1000);
+        }, this.stepDuration);
     };
 
-    this.newArea = function(x, y, field) {
+    this.newArea = function(x, y, w, h) {
+
+        // TODO: get bnds from global bnds
+
         this.areas.push({
             position: {
                 x: x,
                 y: y
             },
-            field: field,
-            solver: new FluidSolver(field, this.solverIterations)
+            field: new FluidField2(w, h) // add bnds
         });
     };
 }
 
-// la notion de field n'est plus nécessaire
-// passer directement à l'area (qui contient plus d'infos)
-
-function Field(w, h) {
-    this.height = 0;
-    this.width = 0;
-    this.size = (w + 2) * (h + 2); // TODO les + 2 disparaitrons quand les bords ne seront plus systématiques
-
-    function resetField() {
-        return (new Uint8Array(this.size)).fill(0);
-    }
-
-    this.bnd = resetField();
-    this.u = resetField();
-    this.v = resetField();
-    this.d = resetField();
-    this.u0 = resetField();
-    this.v0 = resetField();
-    this.d0 = resetField();
-
-    this.visc = 0;
-    this.diff = 0;
-
-    let N = w; // TODO: prendre en compte largeur et hauter
-    this.ix = (i, j) => i + (N + 2) * j;
-
-    this.set = function(u, x, y, v) {
-        this[u][this.ix(x,y)] = v;
-    };
-
-    this.get = function(u, x, y) {
-        return this[u][this.ix(x,y)];
-    };
-}
 
 
 
-
+// OLD:
 
 function FluidField() {
 
@@ -151,14 +111,14 @@ function FluidField() {
 
     function applyPhysics() {
         for (let x = 0; x < width; x++) {
-            for (let y = 0; y < height ; y++) {
+            for (let y = 0; y < height; y++) {
                 let d = dens[(x + 1) + (y + 1) * rowSize];
-                let p = d*1.5;
+                let p = d * 1.5;
                 dens_prev[(x + 1) + (y + 1) * rowSize] = -p;
                 let r = 1;
-                let rng = Math.random() * r - r/2;
-                    u_prev[(x + 1) + (y + 1) * rowSize] = rng;
-                    v_prev[(x + 1) + (y + 1) * rowSize] = -Math.pow(d/100,0.4)/1.2;
+                let rng = Math.random() * r - r / 2;
+                u_prev[(x + 1) + (y + 1) * rowSize] = rng;
+                v_prev[(x + 1) + (y + 1) * rowSize] = -Math.pow(d / 100, 0.4) / 1.2;
             }
         }
     }
@@ -167,7 +127,7 @@ function FluidField() {
         applyPhysics(); // modify x_prev according to dens u et v
         uiCallback(new Field(dens_prev, u_prev, v_prev)); // modify x_prev according to user actions
         //fluidSolver.nextStep(width, height, dens, u, v, dens_prev, u_prev, v_prev);
-        this.fluidSolver.update(0.1);
+        this.fluidSolver.update();
         displayFunc(new Field(dens, u, v));
     };
     this.setDisplayFunction = function(func) {
@@ -201,7 +161,7 @@ function FluidField() {
     var displayFunc;
 
     function reset() {
-        rowSize = width+2;
+        rowSize = width + 2;
         size = (width + 2) * (height + 2);
         dens = new Array(size);
         dens_prev = new Array(size);
@@ -218,7 +178,19 @@ function FluidField() {
         height = hRes;
 
         reset();
-        this.fluidSolver = new FluidField2(width, height, dens, u, v, dens_prev, u_prev, v_prev);
+
+        this.fluidSolver = new FluidField2(width, height, [{
+            x: 20,
+            y: 20,
+            w: 20,
+            h: 20
+        }]);
+        dens = this.fluidSolver.densityField;
+        u = this.fluidSolver.xVelocityField;
+        v = this.fluidSolver.yVelocityField;
+        dens_prev = this.fluidSolver.densitySourceField;
+        u_prev = this.fluidSolver.xVelocitySourceField;
+        v_prev = this.fluidSolver.yVelocitySourceField;
     };
 
 

@@ -9,30 +9,21 @@
  */
 
 /**
- * Update the field by solving the next step
- * @param {number} w width of the area
- * @param {number} h height of the area
- * @param {number[]} d field of density
- * @param {number[]} u field of x-velocity
- * @param {number[]} v field of y-velocity
- * @param {number[]} d0 influence on the field of density
- * @param {number[]} u0 influence on the field of x-velocity
- * @param {number[]} v0 influence on the field of y-velocity
- * @param {Object[]} [bnds=[]] rectangular obstacles
- * @param {number} bnds[].x x position of top left corner
- * @param {number} bnds[].y y position of top left corner
- * @param {number} bnds[].w width
- * @param {number} bnds[].h height
- * @param {number} [diff = 0] diffusion rate
- * @param {number} [visc = 0] viscosity
- * @param {number} [dt = 0.1] step's duration (in seconds)
- * @param {number} [iterations = 10] number of cycles to calculate next step
+ * Fluid field
+ * @param {number} width width of the field
+ * @param {number} height height of the field
+ * @param {Object[]} [boundaries=[]] rectangular obstacles in the field
+ * @param {number} boundaries[].x x position of top left corner
+ * @param {number} boundaries[].y y position of top left corner
+ * @param {number} boundaries[].w width
+ * @param {number} boundaries[].h height
+ * @param {number} [diffusionRate = 0] diffusion rate of the fluid
+ * @param {number} [viscosity = 0] viscosity of the fluid
+ * @param {number} [iterations = 10] number of iterations to calculate next step
+ * @param {number} [defaultStep = 100] default step's duration (in ms)
  */
-
-// TODO put dt in ms (0.1 -> 100) and determine with FPS (20FPS => dt = 50 ms, 60FPS => dt = 15ms)
-
 class FluidField2 {
-    constructor(width, height, d, u, v, d0, u0, v0, boundaries = [], diffusionRate = 0, viscosity = 0, iterations = 10, default_dt = 0.1) {
+    constructor(width, height, boundaries = [], diffusionRate = 0, viscosity = 0, iterations = 10, defaultStep = 100) {
         this.width = width;
         this.height = height;
         this.boundaries = boundaries;
@@ -40,14 +31,14 @@ class FluidField2 {
         this.diffusionRate = 0; // FIXME a diff != 0 makes the solver diverge no matter what
         this.viscosity = diffusionRate;
         this.iterations = iterations;
-        this.default_dt = default_dt;
-        let size = (width + 2) * (height + 2);
-        this.densityField = d; //(new Array(size)).fill(0);
-        this.xVelocityField = u; //(new Array(size)).fill(0);
-        this.yVelocityField = v; //(new Array(size)).fill(0);
-        this.densitySourceField = d0; //(new Array(size)).fill(0);
-        this.xVelocitySourceField = u0; //(new Array(size)).fill(0);
-        this.yVelocitySourceField = v0; //(new Array(size)).fill(0);
+        this.defaultStep = defaultStep;
+        let size = (width + 2) * (height + 2); // +2 for borders
+        this.densityField = (new Array(size)).fill(0);
+        this.xVelocityField = (new Array(size)).fill(0);
+        this.yVelocityField = (new Array(size)).fill(0);
+        this.densitySourceField = (new Array(size)).fill(0);
+        this.xVelocitySourceField = (new Array(size)).fill(0);
+        this.yVelocitySourceField = (new Array(size)).fill(0);
     }
 
     get area() {
@@ -55,16 +46,20 @@ class FluidField2 {
     }
 
     index(x, y) {
-        return x + this.width * y;
+        return x + (this.width + 2) * y;
     }
 
-    update(dt = this.default_dt, iterations = this.default_iterations) {
+    /**
+     * Update the fluid field
+     * @param {number} [step=defaultStep] step's duration
+     */
+    update(step = this.defaultStep) {
         // impeach negative density to happen
-        this._noNegativeDensity(dt);
+        this._noNegativeDensity(step);
         // update density field
-        this._updateDensityField(dt);
+        this._updateDensityField(step);
         // update velocity fields
-        this._updateVelocityField(dt);
+        this._updateVelocityField(step);
 
         // FIXME: misplaced responsability
         [this.densitySourceField, this.xVelocitySourceField, this.yVelocitySourceField].forEach(x => x.fill(0));
@@ -107,8 +102,14 @@ class FluidField2 {
     }
 
     _add_source(x, s, dt) {
-        for (let i = 0; i < this.area; i++) {
-            x[i] += dt * s[i];
+        let IX = (x, y) => x + (this.width + 2) * y;
+        let w = this.width;
+        let h = this.height;
+
+        for (let i = 2; i <= w - 1; i++) {
+            for (let j = 2; j <= h - 1; j++) {
+                x[IX(i, j)] += dt * s[IX(i, j)] / 1000;
+            }
         }
     }
 
@@ -145,11 +146,10 @@ class FluidField2 {
             }
 
             // corners
-            // TODO: not sure if it would be better to take just the diagonal instead of half each sides
-            u[IX(x0, y0)] = 0.5 * (u[IX(x0 - 1, y0)] + u[IX(x0, y0 - 1)]);
-            u[IX(x0, y0 + h0 - 1)] = 0.5 * (u[IX(x0 - 1, y0 + h0 - 1)] + u[IX(x0, y0 + h0)]);
-            u[IX(x0 + w0 - 1, y0)] = 0.5 * (u[IX(x0 + w0, y0 - 1)] + u[IX(x0 + w0 - 1, y0)]);
-            u[IX(x0 + w0 - 1, y0 + h0 - 1)] = 0.5 * (u[IX(x0 + w0, y0 + h0 - 1)] + u[IX(x0 + w0 - 1, y0 + h0)]);
+            u[IX(x0, y0)] = u[IX(x0 - 1, y0 - 1)];
+            u[IX(x0, y0 + h0 - 1)] = u[IX(x0 - 1, y0 + h0)];
+            u[IX(x0 + w0 - 1, y0)] = u[IX(x0 + w0, y0 - 1)];
+            u[IX(x0 + w0 - 1, y0 + h0 - 1)] = u[IX(x0 + w0, y0 + h0)];
         });
     }
 
@@ -170,7 +170,7 @@ class FluidField2 {
     }
 
     _diffuse(b, x, x0, diff, dt) {
-        let a = dt * diff * this.width * this.height;
+        let a = dt * diff * this.width * this.height / 1000;
         this._lin_solve(b, x, x0, a, 1 + 4 * a);
     }
 
@@ -179,7 +179,7 @@ class FluidField2 {
         let w = this.width;
         let h = this.height;
 
-        let dt0 = dt * Math.sqrt(w * h);
+        let dt0 = dt * Math.sqrt(w * h) / 1000;
         for (let i = 1; i < w; i++) {
             for (let j = 1; j < h; j++) {
                 let x = i - dt0 * u[IX(i, j)];
