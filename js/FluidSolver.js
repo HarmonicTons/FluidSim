@@ -32,7 +32,7 @@
 // TODO put dt in ms (0.1 -> 100) and determine with FPS (20FPS => dt = 50 ms, 60FPS => dt = 15ms)
 
 class FluidField2 {
-    constructor(width, height, boundaries = [], diffusionRate = 0, viscosity = 0, iterations = 10, default_dt = 0.015) {
+    constructor(width, height, boundaries = [], diffusionRate = 0, viscosity = 0, iterations = 10, default_dt = 0.1) {
         this.width = width;
         this.height = height;
         this.boundaries = boundaries;
@@ -64,7 +64,7 @@ class FluidField2 {
         // update density field
         this._updateDensityField(dt);
         // update velocity fields
-        //this._updateVelocityField(dt);
+        this._updateVelocityField(dt);
 
         // FIXME: misplaced responsability
         [this.densitySourceField, this.xVelocitySourceField, this.yVelocitySourceField].forEach(x => x.fill(0));
