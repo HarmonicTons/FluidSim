@@ -20,7 +20,7 @@ class Simulation {
         this.inputs = [];
 
         this.renderer = new Renderer(this, canvas);
-        this.inputListener = new InputListener(this, canvas); // meh.
+        this.inputListener = new InputListener(canvas); // meh.
 
     }
 
