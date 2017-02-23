@@ -12,24 +12,24 @@
  * Fluid field
  * @param {number} width width of the field
  * @param {number} height height of the field
- * @param {number[]} obstacleField obstacle field
+ * @param {number[]} obstacleMap obstacle field
  * @param {number} [diffusionRate = 0] diffusion rate of the fluid
  * @param {number} [viscosity = 0] viscosity of the fluid
- * @param {number} [iterations = 10] number of iterations to calculate next step
- * @param {number} [defaultStep = 100] default step's duration (in ms)
+ * @param {number} [solverIterations = 10] number of iterations to calculate next step
+ * @param {number} [defaultStepDuration = 100] default step's duration (in ms)
  */
 
  // pour garde 60 FPS en continue il faut que iterations = 36000 / w / h
 class FluidField2 {
-    constructor(width, height, obstacleField, diffusionRate = 0, viscosity = 0, iterations = 10, defaultStep = 100) {
+    constructor(width, height, obstacleMap, diffusionRate = 0, viscosity = 0, solverIterations = 10, defaultStepDuration = 100) {
         this.width = width;
         this.height = height;
-        this.obstacleField = obstacleField;
+        this.obstacleMap = obstacleMap;
         this.diffusionRate = diffusionRate;
         this.diffusionRate = 0; // FIXME a diff != 0 makes the solver diverge no matter what
         this.viscosity = viscosity;
-        this.iterations = iterations;
-        this.defaultStep = defaultStep;
+        this.solverIterations = solverIterations;
+        this.defaultStepDuration = defaultStepDuration;
         let size = (width + 2) * (height + 2); // +2 for borders
         this.densityField = (new Array(size)).fill(0);
         this.xVelocityField = (new Array(size)).fill(0);
@@ -42,16 +42,55 @@ class FluidField2 {
     index(x, y) {
         return x + (this.width + 2) * y;
     }
+    // fields
+    getDensity(x,y) {
+        return this.densityField[this.index(x,y)];
+    }
+    getXVelocity(x,y) {
+        return this.xVelocityField[this.index(x,y)];
+    }
+    getYVelocity(x,y) {
+        return this.yVelocityField[this.index(x,y)];
+    }
+    setDensity(x,y,v) {
+        this.densityField[this.index(x,y)] = v;
+    }
+    setXVelocity(x,y,v) {
+        this.xVelocityField[this.index(x,y)] = v;
+    }
+    setYVelocity(x,y,v) {
+        this.yVelocityField[this.index(x,y)] = v;
+    }
+    // sources
+    getDensitySource(x,y) {
+        return this.densitySourceField[this.index(x,y)];
+    }
+    getXVelocitySource(x,y) {
+        return this.xVelocitySourceField[this.index(x,y)];
+    }
+    getYVelocitySource(x,y) {
+        return this.yVelocitySourceField[this.index(x,y)];
+    }
+    setDensitySource(x,y,v) {
+        this.densitySourceField[this.index(x,y)] = v;
+    }
+    setXVelocitySource(x,y,v) {
+        this.xVelocitySourceField[this.index(x,y)] = v;
+    }
+    setYVelocitySource(x,y,v) {
+        this.yVelocitySourceField[this.index(x,y)] = v;
+    }
+
 
     /**
      * Update the fluid field
-     * @param {number} [step=defaultStep] step's duration
+     * @param {number} [stepDuration=default] step's duration
      */
-    update(step = this.defaultStep) {
+    update(stepDuration = this.defaultStepDuration) {
         // update density field
-        this._updateDensityField(step);
+        this._updateDensityField(stepDuration);
         // update velocity fields
-        this._updateVelocityField(step);
+        this._updateVelocityField(stepDuration);
 
         // FIXME: misplaced responsability
         [this.densitySourceField, this.xVelocitySourceField, this.yVelocitySourceField].forEach(x => x.fill(0));
@@ -99,7 +138,7 @@ class FluidField2 {
     }
 
     _set_bnd(b, u) {
-        let bnds = this.obstacleField;
+        let bnds = this.obstacleMap;
         let w = this.width;
         let h = this.height;
         let IX = (x, y) => x + (this.width + 2) * y;
@@ -134,7 +173,7 @@ class FluidField2 {
 
     _lin_solve(b, x, x0, a, c) {
         let IX = (x, y) => x + (this.width + 2) * y;
-        let kMax = this.iterations;
+        let kMax = this.solverIterations;
         let w = this.width;
         let h = this.height;
 
