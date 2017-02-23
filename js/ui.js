@@ -49,16 +49,19 @@ function prepareFrame(field) {
         omx = mx;
         omy = my;
     }
+    sources = [[39,170]];
     for (var i = 0; i < sources.length; i++) {
         var x = ((sources[i][0] / w) * field.width()) | 0;
         var y = ((sources[i][1] / h) * field.height()) | 0;
+        field.setDensity(x, y, 500);
+        /*
         for (let j = 0; j < 5; j++) {
             for (let k = 0; k < 5; k++) {
                 if (x + j - 2 >= 0 && x + j - 2 < w && y + k - 2 >= 0 && y + k - 2 < h) {
                     field.setDensity(x + j - 2, y + k - 2, 100);
                 }
             }
-        }
+        }*/
     }
 
 }

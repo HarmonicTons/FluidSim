@@ -19,13 +19,13 @@
  * @param {number} [defaultStep = 100] default step's duration (in ms)
  */
 class FluidField2 {
-    constructor(width, height, obstacleField, diffusionRate = 0, viscosity = 10, iterations = 10, defaultStep = 100) {
+    constructor(width, height, obstacleField, diffusionRate = 0, viscosity = 0, iterations = 10, defaultStep = 100) {
         this.width = width;
         this.height = height;
         this.obstacleField = obstacleField;
         this.diffusionRate = diffusionRate;
         this.diffusionRate = 0; // FIXME a diff != 0 makes the solver diverge no matter what
-        this.viscosity = diffusionRate;
+        this.viscosity = viscosity;
         this.iterations = iterations;
         this.defaultStep = defaultStep;
         let size = (width + 2) * (height + 2); // +2 for borders

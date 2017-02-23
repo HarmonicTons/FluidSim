@@ -112,7 +112,7 @@ function FluidField() {
         for (let x = 0; x < width; x++) {
             for (let y = 0; y < height; y++) {
                 let d = dens[(x + 1) + (y + 1) * rowSize];
-                let p = d * 0.2;
+                let p = d * 0;
                 dens_prev[(x + 1) + (y + 1) * rowSize] = -p;
                 let r = 1;
                 let rng = Math.random() * r - r / 2;
