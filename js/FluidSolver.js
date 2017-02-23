@@ -12,21 +12,17 @@
  * Fluid field
  * @param {number} width width of the field
  * @param {number} height height of the field
- * @param {Object[]} [boundaries=[]] rectangular obstacles in the field
- * @param {number} boundaries[].x x position of top left corner
- * @param {number} boundaries[].y y position of top left corner
- * @param {number} boundaries[].w width
- * @param {number} boundaries[].h height
+ * @param {number[]} obstacleField obstacle field
  * @param {number} [diffusionRate = 0] diffusion rate of the fluid
  * @param {number} [viscosity = 0] viscosity of the fluid
  * @param {number} [iterations = 10] number of iterations to calculate next step
  * @param {number} [defaultStep = 100] default step's duration (in ms)
  */
 class FluidField2 {
-    constructor(width, height, boundaries = [], diffusionRate = 0, viscosity = 0, iterations = 10, defaultStep = 100) {
+    constructor(width, height, obstacleField, diffusionRate = 0, viscosity = 10, iterations = 10, defaultStep = 100) {
         this.width = width;
         this.height = height;
-        this.boundaries = boundaries;
+        this.obstacleField = obstacleField;
         this.diffusionRate = diffusionRate;
         this.diffusionRate = 0; // FIXME a diff != 0 makes the solver diverge no matter what
         this.viscosity = diffusionRate;
@@ -113,44 +109,40 @@ class FluidField2 {
         }
     }
 
-    // TODO: improve
-    // adapt to every shape not just rectangle
-    // with a boundariesField
     _set_bnd(b, u) {
-        let bnds = this.boundaries;
+        let bnds = this.obstacleField;
+        let w = this.width;
+        let h = this.height;
         let IX = (x, y) => x + (this.width + 2) * y;
 
-        if (bnds.length == 0) return;
-        bnds.forEach(({
-            x: x0,
-            y: y0,
-            w: w0,
-            h: h0
-        }) => {
-            // horizontal sides
-            for (let i = 1; i < w0 - 1; i++) {
-                u[IX(x0 + i, y0)] = b == 2 ? -u[IX(x0 + i, y0 - 1)] : u[IX(x0 + i, y0 - 1)];
-                u[IX(x0 + i, y0 + h0 - 1)] = b == 2 ? -u[IX(x0 + i, y0 + h0)] : u[IX(x0 + i, y0 + h0)];
-            }
-            // vertical sides
-            for (let i = 1; i < h0 - 1; i++) {
-                u[IX(x0, y0 + i)] = b == 1 ? -u[IX(x0 - 1, y0 + i)] : u[IX(x0 - 1, y0 + i)];
-                u[IX(x0 + w0 - 1, y0 + i)] = b == 1 ? -u[IX(x0 + w0, y0 + i)] : u[IX(x0 + w0, y0 + i)];
-            }
+        // TODO: different value for u v and d
 
-            // center
-            for (let i = 2; i < w0 - 2; i++) {
-                for (let j = 2; j < h0 - 2; j++) {
-                    u[IX(x0 + i, y0 + j)] = 0;
+        for (let i = 1; i <= w; i++) {
+            for (let j = 1; j <= h; j++) {
+                // if this case is an obstacle
+                if (bnds[IX(i, j)] === 1) {
+                    let neighboors = [];
+                    if (bnds[IX(i - 1, j)] === 0) {
+                        neighboors.push(u[IX(i - 1, j)]);
+                    }
+                    if (bnds[IX(i + 1, j)] === 0) {
+                        neighboors.push(u[IX(i + 1, j)]);
+                    }
+                    if (bnds[IX(i, j - 1)] === 0) {
+                        neighboors.push(u[IX(i, j - 1)]);
+                    }
+                    if (bnds[IX(i, j + 1)] === 0) {
+                        neighboors.push(u[IX(i, j + 1)]);
+                    }
+                    if (neighboors.length === 0 ) {
+                        u[IX(i,j)] = 0;
+                    } else {
+                        let val = neighboors.reduce((sum, n) => sum += n, 0) / neighboors.length;
+                        u[IX(i, j)] = b >= 1 ? -val : val;
+                    }
                 }
             }
-
-            // corners
-            u[IX(x0, y0)] = u[IX(x0 - 1, y0 - 1)];
-            u[IX(x0, y0 + h0 - 1)] = u[IX(x0 - 1, y0 + h0)];
-            u[IX(x0 + w0 - 1, y0)] = u[IX(x0 + w0, y0 - 1)];
-            u[IX(x0 + w0 - 1, y0 + h0 - 1)] = u[IX(x0 + w0, y0 + h0)];
-        });
+        }
     }
 
     _lin_solve(b, x, x0, a, c) {

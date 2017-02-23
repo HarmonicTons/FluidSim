@@ -1,4 +1,3 @@
-
 function Simulation() {
     this.cycles = 0;
     this.isPaused = true;
@@ -113,11 +112,11 @@ function FluidField() {
         for (let x = 0; x < width; x++) {
             for (let y = 0; y < height; y++) {
                 let d = dens[(x + 1) + (y + 1) * rowSize];
-                let p = d * 1.5;
+                let p = d * 0.2;
                 dens_prev[(x + 1) + (y + 1) * rowSize] = -p;
                 let r = 1;
                 let rng = Math.random() * r - r / 2;
-                u_prev[(x + 1) + (y + 1) * rowSize] = rng;
+                u_prev[(x + 1) + (y + 1) * rowSize] = 0;//rng;
                 v_prev[(x + 1) + (y + 1) * rowSize] = -Math.pow(d / 100, 0.4) / 1.2;
             }
         }
@@ -126,7 +125,6 @@ function FluidField() {
     this.update = function() {
         applyPhysics(); // modify x_prev according to dens u et v
         uiCallback(new Field(dens_prev, u_prev, v_prev)); // modify x_prev according to user actions
-        //fluidSolver.nextStep(width, height, dens, u, v, dens_prev, u_prev, v_prev);
         this.fluidSolver.update();
         displayFunc(new Field(dens, u, v));
     };
@@ -179,12 +177,19 @@ function FluidField() {
 
         reset();
 
-        this.fluidSolver = new FluidField2(width, height, [{
-            x: 20,
-            y: 20,
-            w: 20,
-            h: 20
-        }]);
+
+        let bnds = (new Array((width + 2) * (height + 2))).fill(0);
+        let x0 = 40;
+        let y0 = 120;
+        for (let i = 20; i < 60; i++) {
+            for (let j = 100; j < 140; j++) {
+                if (Math.sqrt((x0 - i) * (x0 - i) + (y0 - j) * (y0 - j)) <= 15) {
+                    bnds[i + (width + 2) * j] = 1;
+                }
+            }
+        }
+
+        this.fluidSolver = new FluidField2(width, height, bnds);
         dens = this.fluidSolver.densityField;
         u = this.fluidSolver.xVelocityField;
         v = this.fluidSolver.yVelocityField;

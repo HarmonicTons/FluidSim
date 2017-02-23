@@ -96,8 +96,8 @@ function updateFrame() {
 window.onload = function() {
     canvas = document.getElementById("canvas");
     field = new FluidField(canvas);
-    canvas.width = 50;
-    canvas.height = 100;
+    canvas.width = 80;
+    canvas.height = 180;
     field.setResolution(canvas.height, canvas.width);
     field.setUICallback(prepareFrame);
 
