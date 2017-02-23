@@ -18,6 +18,8 @@
  * @param {number} [iterations = 10] number of iterations to calculate next step
  * @param {number} [defaultStep = 100] default step's duration (in ms)
  */
+
+ // pour garde 60 FPS en continue il faut que iterations = 36000 / w / h
 class FluidField2 {
     constructor(width, height, obstacleField, diffusionRate = 0, viscosity = 0, iterations = 10, defaultStep = 100) {
         this.width = width;
@@ -37,10 +39,6 @@ class FluidField2 {
         this.yVelocitySourceField = (new Array(size)).fill(0);
     }
 
-    get area() {
-        return (this.width + 2) * (this.height + 2);
-    }
-
     index(x, y) {
         return x + (this.width + 2) * y;
     }
@@ -50,8 +48,6 @@ class FluidField2 {
      * @param {number} [step=defaultStep] step's duration
      */
     update(step = this.defaultStep) {
-        // impeach negative density to happen
-        this._noNegativeDensity(step);
         // update density field
         this._updateDensityField(step);
         // update velocity fields
@@ -59,13 +55,6 @@ class FluidField2 {
 
         // FIXME: misplaced responsability
         [this.densitySourceField, this.xVelocitySourceField, this.yVelocitySourceField].forEach(x => x.fill(0));
-    }
-
-    _noNegativeDensity(dt) {
-        // TODO
-        // for each point check that densityField >= densityInfluenceField * dt
-        // otherwise densityInfluenceField = densityField / dt;
-        // if densityField < 0 set to 0
     }
 
     _updateDensityField(dt) {
@@ -114,8 +103,6 @@ class FluidField2 {
         let w = this.width;
         let h = this.height;
         let IX = (x, y) => x + (this.width + 2) * y;
-
-        // TODO: different value for u v and d
 
         for (let i = 1; i <= w; i++) {
             for (let j = 1; j <= h; j++) {

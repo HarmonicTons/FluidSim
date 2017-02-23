@@ -49,7 +49,7 @@ function prepareFrame(field) {
         omx = mx;
         omy = my;
     }
-    sources = [[39,170]];
+    //sources = [[39,170], [29,170], [49,170]];
     for (var i = 0; i < sources.length; i++) {
         var x = ((sources[i][0] / w) * field.width()) | 0;
         var y = ((sources[i][1] / h) * field.height()) | 0;
@@ -79,9 +79,11 @@ function startAnimation() {
 }
 
 function updateFrame() {
-    field.update();
+
     var end = new Date;
     frames++;
+
+    let fps = 1000 * frames / (end - start) + 0.5;
     if ((end - start) > 1000) {
         document.getElementById("fps").innerHTML = "FPS: " + ((1000 * frames / (end - start) + 0.5) | 0);
         let fieldInfo = field.getFieldInfo();
@@ -92,6 +94,8 @@ function updateFrame() {
     }
     if (running)
         interval = setTimeout(updateFrame, 10);
+
+    field.update(fps);
 }
 
 
@@ -99,8 +103,8 @@ function updateFrame() {
 window.onload = function() {
     canvas = document.getElementById("canvas");
     field = new FluidField(canvas);
-    canvas.width = 80;
-    canvas.height = 180;
+    canvas.width = 60;
+    canvas.height = 60;
     field.setResolution(canvas.height, canvas.width);
     field.setUICallback(prepareFrame);
 

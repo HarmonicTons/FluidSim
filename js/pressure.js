@@ -112,17 +112,18 @@ function FluidField() {
         for (let x = 0; x < width; x++) {
             for (let y = 0; y < height; y++) {
                 let d = dens[(x + 1) + (y + 1) * rowSize];
-                let p = d * 0;
+                let p = d * 1.5;
                 dens_prev[(x + 1) + (y + 1) * rowSize] = -p;
                 let r = 1;
                 let rng = Math.random() * r - r / 2;
-                u_prev[(x + 1) + (y + 1) * rowSize] = 0;//rng;
+                u_prev[(x + 1) + (y + 1) * rowSize] = rng;
                 v_prev[(x + 1) + (y + 1) * rowSize] = -Math.pow(d / 100, 0.4) / 1.2;
+
             }
         }
     }
 
-    this.update = function() {
+    this.update = function(fps) {
         applyPhysics(); // modify x_prev according to dens u et v
         uiCallback(new Field(dens_prev, u_prev, v_prev)); // modify x_prev according to user actions
         this.fluidSolver.update();
@@ -179,6 +180,7 @@ function FluidField() {
 
 
         let bnds = (new Array((width + 2) * (height + 2))).fill(0);
+        /*
         let x0 = 40;
         let y0 = 120;
         for (let i = 20; i < 60; i++) {
@@ -188,6 +190,7 @@ function FluidField() {
                 }
             }
         }
+        */
 
         this.fluidSolver = new FluidField2(width, height, bnds);
         dens = this.fluidSolver.densityField;
