@@ -4,7 +4,7 @@ class Simulation {
         this.height = height;
         this.canvas = canvas;
 
-        this.cycles = 0;
+        this.frames = 0;
         this.isPaused = true;
         this.stepDuration = 100;
         this.solverIterations = 10;
@@ -16,10 +16,19 @@ class Simulation {
             diffusionRate: 0
         }
 
+        this.inputStrenght = 100;
+
         this.resetObstacleMap();
 
         this.renderer = new Renderer(this, canvas);
         this.inputListener = new InputListener(canvas);
+    }
+
+    get ratio() {
+        return {
+            x: this.canvas.width / this.width,
+            y: this.canvas.height / this.height
+        }
     }
 
     _get(what, x, y) {
@@ -86,6 +95,9 @@ class Simulation {
         return x + this.width * y;
     }
 
+    getObstacle(x, y) {
+        return this.obstacleMap[this._ix(x, y)];
+    }
     setObstacle(x, y, o) {
         this.obstacleMap[this._ix(x, y)] = o;
     }
@@ -112,17 +124,22 @@ class Simulation {
     handleInputs() {
         let inputs = this.inputListener.getInputs();
         inputsForEach: for (let input of inputs) {
+            let x0 = input.position.x / this.ratio.x;
+            let y0 = input.position.y / this.ratio.y;
             for (let area of this.areas) {
-                if (input.position.x >= area.position.x &&
-                    input.position.x < area.position.x + area.field.width &&
-                    input.position.y >= area.position.y &&
-                    input.position.y < area.position.y + area.field.height) {
+                if (x0 >= area.position.x &&
+                    x0 < area.position.x + area.field.width &&
+                    y0 >= area.position.y &&
+                    y0 < area.position.y + area.field.height) {
                     let inputInAreaReferentiel = {
                         position: {
-                            x: input.position.x - area.position.x,
-                            y: input.position.y - area.position.y
+                            x: x0 - area.position.x,
+                            y: y0 - area.position.y
                         }
-                        speed: input.speed
+                        speed: {
+                            x: input.speed.x / this.ratio.x,
+                            y: input.speed.y / this.ratio.y,
+                        }
                     }
                     area.inputs.push(inputInAreaReferentiel);
                     continue inputsForEach;
@@ -148,16 +165,17 @@ class Simulation {
 
         this.renderer.render();
 
-        this.cycles++;
+        this.frames++;
         requestAnimationFrame(this.simulationLoop);
     }
 
     applyInputs(area) {
         let inputs = area.inputs;
-        inputs.forEach(input => {
-            // TODO
-            // exemples:
-            // area.field.setDensity(input.x, input.y, val);
+        let strenght = this.inputStrenght;
+        inputs.forEach({position, speed} => {
+            area.field.setDensity(position.x, position.y, strenght);
+            area.field.setXVelocity(position.x, position.y, speed.x);
+            area.field.setYVelocity(position.x, position.y, speed.y);
         });
     }
 
@@ -167,16 +185,21 @@ class Simulation {
     }
 
     newArea(x, y, w, h) {
-
-        // TODO: get bnds from global bnds
-
-        this.areas.push({
+        let newArea = {
             position: {
                 x: x,
                 y: y
             },
-            field: new FluidField2(w, h), // add bnds
+            field: new FluidField(w, h, this.fluid.diffusionRate, this.fluid.viscosity, this.solverIterations, this.stepDuration),
             inputs: []
-        });
+        };
+
+        // fill the obstacleMap of the area with the data of the obstacleMap of the Simulation
+        for (let i = 0; i < w; i++) {
+            for (let j = 0; j < h; j++) {
+                newArea.field.setObstacle(i, j, this.getObstacle(i + x, j + y));
+            }
+        }
+        this.areas.push(newArea);
     }
 }

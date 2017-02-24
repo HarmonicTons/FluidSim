@@ -20,16 +20,16 @@
  */
 
  // pour garde 60 FPS en continue il faut que iterations = 36000 / w / h
-class FluidField2 {
-    constructor(width, height, obstacleMap, diffusionRate = 0, viscosity = 0, solverIterations = 10, defaultStepDuration = 100) {
+class FluidField {
+    constructor(width, height, diffusionRate = 0, viscosity = 0, solverIterations = 10, defaultStepDuration = 100) {
         this.width = width;
         this.height = height;
-        this.obstacleMap = obstacleMap;
         this.diffusionRate = diffusionRate;
         this.viscosity = viscosity;
         this.solverIterations = solverIterations;
         this.defaultStepDuration = defaultStepDuration;
         let size = (width + 2) * (height + 2); // +2 for borders
+        this.obstacleMap = (new Array(size)).fill(0);
         this.densityField = (new Array(size)).fill(0);
         this.xVelocityField = (new Array(size)).fill(0);
         this.yVelocityField = (new Array(size)).fill(0);
@@ -40,6 +40,13 @@ class FluidField2 {
 
     index(x, y) {
         return x + (this.width + 2) * y;
+    }
+    //obstacleMap
+    getObstacle(x,y) {
+        return this.obstacleMap[this.index(x,y)];
+    }
+    setObstacle(x,y,v) {
+        this.obstacleMap[this.index(x,y)] = v;
     }
     // fields
     getDensity(x,y) {
@@ -90,9 +97,6 @@ class FluidField2 {
         this._updateDensityField(stepDuration);
         // update velocity fields
         this._updateVelocityField(stepDuration);
-
-        // FIXME: misplaced responsability
-        [this.densitySourceField, this.xVelocitySourceField, this.yVelocitySourceField].forEach(x => x.fill(0));
     }
 
     _updateDensityField(dt) {

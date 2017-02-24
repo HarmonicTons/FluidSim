@@ -1,5 +1,5 @@
 
-function FluidField() {
+function FluidField2() {
 
 
     var uiCallback;
@@ -58,10 +58,12 @@ function FluidField() {
     }
 
     this.update = function(fps) {
+        [dens_prev, u_prev, v_prev].forEach(x => x.fill(0));
         applyPhysics(); // modify x_prev according to dens u et v
         uiCallback(new Field(dens_prev, u_prev, v_prev)); // modify x_prev according to user actions
         this.fluidSolver.update();
         displayFunc(new Field(dens, u, v));
+
     };
     this.setDisplayFunction = function(func) {
         displayFunc = func;
@@ -126,7 +128,7 @@ function FluidField() {
         }
         */
 
-        this.fluidSolver = new FluidField2(width, height, bnds, 0.00001, 0);
+        this.fluidSolver = new FluidField(width, height, bnds, Math.pow(10,-10), Math.pow(10,-10));
         dens = this.fluidSolver.densityField;
         u = this.fluidSolver.xVelocityField;
         v = this.fluidSolver.yVelocityField;

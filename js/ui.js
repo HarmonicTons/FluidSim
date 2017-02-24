@@ -102,7 +102,7 @@ function updateFrame() {
 
 window.onload = function() {
     canvas = document.getElementById("canvas");
-    field = new FluidField(canvas);
+    field = new FluidField2(canvas);
     canvas.width = 60;
     canvas.height = 60;
     field.setResolution(canvas.height, canvas.width);
