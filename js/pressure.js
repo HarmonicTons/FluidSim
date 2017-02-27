@@ -114,21 +114,7 @@ function FluidField2() {
 
         reset();
 
-
-        let bnds = (new Array((width + 2) * (height + 2))).fill(0);
-        /*
-        let x0 = 40;
-        let y0 = 120;
-        for (let i = 20; i < 60; i++) {
-            for (let j = 100; j < 140; j++) {
-                if (Math.sqrt((x0 - i) * (x0 - i) + (y0 - j) * (y0 - j)) <= 15) {
-                    bnds[i + (width + 2) * j] = 1;
-                }
-            }
-        }
-        */
-
-        this.fluidSolver = new FluidField(width, height, bnds, Math.pow(10,-10), Math.pow(10,-10));
+        this.fluidSolver = new FluidField(width, height, Math.pow(10,-10), Math.pow(10,-10));
         dens = this.fluidSolver.densityField;
         u = this.fluidSolver.xVelocityField;
         v = this.fluidSolver.yVelocityField;
