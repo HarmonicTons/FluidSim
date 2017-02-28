@@ -9,14 +9,11 @@ class InputListener {
 
         let self = this;
         this.element.onmousemove = function(e) {
-            mouseData._lastPosition = mouseData.position;
             mouseData.position = {
                 x: e.offsetX,
                 y: e.offsetY,
                 _at: Date.now()
             };
-
-            console.log(JSON.stringify(self.getInputs()));
         }
         this.element.onmouseup = function(e) {
             mouseData.status = 'up';
@@ -56,9 +53,15 @@ class MouseData {
             y: 0,
             _at: Date.now()
         };
+        this.speed = {
+            x: 0,
+            y: 0
+        }
+        // recalculate speed every 100ms
+        setInterval(() => this.setSpeed(), 100);
     }
 
-    get speed() {
+    setSpeed() {
         let {
             x: x1,
             y: y1,
@@ -70,9 +73,18 @@ class MouseData {
             _at: t0
         } = this._lastPosition;
 
-        return {
-            x: (x1 - x0) / (t1 - t0),
-            y: (y1 - y0) / (t1 - t0)
+        let speed = {
+            x: 0,
+            y: 0
         }
+        if ((t1 != t0) && (t1 - t0 < 200) && (Date.now() - t1 < 100)) {
+            speed = {
+                x: (x1 - x0) / (t1 - t0) * 100,
+                y: (y1 - y0) / (t1 - t0) * 100
+            }
+        }
+
+        this.speed = speed;
+        this._lastPosition = this.position;
     }
 }

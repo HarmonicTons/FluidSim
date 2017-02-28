@@ -19,7 +19,7 @@
  * @param {number} [defaultStepDuration = 100] default step's duration (in ms)
  */
 
- // pour garde 60 FPS en continue il faut que iterations = 36000 / w / h
+// pour garde 60 FPS en continue il faut que iterations = 36000 / w / h
 class FluidField {
     constructor(width, height, diffusionRate = 0, viscosity = 0, solverIterations = 10, defaultStepDuration = 100) {
         this.width = width;
@@ -39,52 +39,57 @@ class FluidField {
     }
 
     index(x, y) {
-        return x + (this.width + 2) * y;
+        return (x + 1) + (this.width + 2) * (y + 1);
     }
     //obstacleMap
-    getObstacle(x,y) {
-        return this.obstacleMap[this.index(x,y)];
+    getObstacle(x, y) {
+        return this.obstacleMap[this.index(x, y)];
     }
-    setObstacle(x,y,v) {
-        this.obstacleMap[this.index(x,y)] = v;
+    setObstacle(x, y, v) {
+        this.obstacleMap[this.index(x, y)] = v;
     }
     // fields
-    getDensity(x,y) {
-        return this.densityField[this.index(x,y)];
+    getDensity(x, y) {
+        return this.densityField[this.index(x, y)];
     }
-    getXVelocity(x,y) {
-        return this.xVelocityField[this.index(x,y)];
+    getXVelocity(x, y) {
+        return this.xVelocityField[this.index(x, y)];
     }
-    getYVelocity(x,y) {
-        return this.yVelocityField[this.index(x,y)];
+    getYVelocity(x, y) {
+        return this.yVelocityField[this.index(x, y)];
     }
-    setDensity(x,y,v) {
-        this.densityField[this.index(x,y)] = v;
+    setDensity(x, y, v) {
+        this.densityField[this.index(x, y)] = v;
     }
-    setXVelocity(x,y,v) {
-        this.xVelocityField[this.index(x,y)] = v;
+    setXVelocity(x, y, v) {
+        this.xVelocityField[this.index(x, y)] = v;
     }
-    setYVelocity(x,y,v) {
-        this.yVelocityField[this.index(x,y)] = v;
+    setYVelocity(x, y, v) {
+        this.yVelocityField[this.index(x, y)] = v;
     }
     // sources
-    getDensitySource(x,y) {
-        return this.densitySourceField[this.index(x,y)];
+    getDensitySource(x, y) {
+        return this.densitySourceField[this.index(x, y)];
     }
-    getXVelocitySource(x,y) {
-        return this.xVelocitySourceField[this.index(x,y)];
+    getXVelocitySource(x, y) {
+        return this.xVelocitySourceField[this.index(x, y)];
     }
-    getYVelocitySource(x,y) {
-        return this.yVelocitySourceField[this.index(x,y)];
+    getYVelocitySource(x, y) {
+        return this.yVelocitySourceField[this.index(x, y)];
     }
-    setDensitySource(x,y,v) {
-        this.densitySourceField[this.index(x,y)] = v;
+    setDensitySource(x, y, v) {
+        this.densitySourceField[this.index(x, y)] = v;
     }
-    setXVelocitySource(x,y,v) {
-        this.xVelocitySourceField[this.index(x,y)] = v;
+    setXVelocitySource(x, y, v) {
+        this.xVelocitySourceField[this.index(x, y)] = v;
     }
-    setYVelocitySource(x,y,v) {
-        this.yVelocitySourceField[this.index(x,y)] = v;
+    setYVelocitySource(x, y, v) {
+        this.yVelocitySourceField[this.index(x, y)] = v;
+    }
+    resetSources() {
+        this.densitySourceField.fill(0);
+        this.xVelocitySourceField.fill(0);
+        this.yVelocitySourceField.fill(0);
     }
 
 
@@ -163,8 +168,8 @@ class FluidField {
                     if (bnds[IX(i, j + 1)] === 0) {
                         neighboors.push(u[IX(i, j + 1)]);
                     }
-                    if (neighboors.length === 0 ) {
-                        u[IX(i,j)] = 0;
+                    if (neighboors.length === 0) {
+                        u[IX(i, j)] = 0;
                     } else {
                         let val = neighboors.reduce((sum, n) => sum += n, 0) / neighboors.length;
                         u[IX(i, j)] = b >= 1 ? -val : val;

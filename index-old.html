@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>FluidSim</title>
+    <script src="./js/InputListener.js"></script>
+    <script src="./js/FluidField.js"></script>
+    <script src="./js/pressure.js"></script>
+    <script src="./js/pressure-display.js"></script>
+    <script src="./js/ui.js"></script>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+    <canvas style="display:none" id="canvasZoom" width="512" height="512"></canvas>
+    <div id="fps"></div>
+    <div id="max"></div>
+    <div id="avg"></div>
+    <button onclick="startAnimation()">start</button>
+    <button onclick="stopAnimation()">stop</button>
+    <button onclick="field.reset(); frames = 0; sources = [];">reset</button><br>
+    <button onclick="field.setDisplayFunction(toggleDisplayFunction(canvas))">Toggle drawing mode</button><br> Solver Iterations:
+    <input id="iterations" type="range" onchange="field.setIterations(event.target.value)" min="1" max="75"><br> Resolution:
+    <select id="resolution" onchange="updateRes()">
+        <option>8</option>
+        <option>16</option>
+        <option>24</option>
+        <option>32</option>
+        <option>48</option>
+        <option selected>64</option>
+        <option>96</option>
+        <option>128</option>
+        <option>256</option>
+        <option>512</option>
+    </select>
+</body>
+
+</html>

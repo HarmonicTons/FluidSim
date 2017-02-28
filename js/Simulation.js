@@ -1,7 +1,8 @@
 class Simulation {
-    constructor(width, height, canvas) {
+    constructor(width, height, fluid, canvas) {
         this.width = width;
         this.height = height;
+        this.fluid = fluid;
         this.canvas = canvas;
 
         this.frames = 0;
@@ -10,13 +11,7 @@ class Simulation {
         this.solverIterations = 10;
         this.areas = [];
 
-        this.fluid = {
-            name: "air",
-            viscosity: 0,
-            diffusionRate: 0
-        }
-
-        this.inputStrenght = 100;
+        this.inputStrenght = 500;
 
         this.resetObstacleMap();
 
@@ -39,10 +34,10 @@ class Simulation {
             let area = this.areas[i];
             let x0 = area.position.x;
             let y0 = area.position.y;
-            let w = area.field.w;
-            let h = area.field.h;
+            let w = area.field.width;
+            let h = area.field.height;
 
-            if (x > x0 && x < x0 + w && y > y0 && y < y0 + h) {
+            if (x >= x0 && x < x0 + w && y >= y0 && y < y0 + h) {
                 if (what === "density") {
                     return area.field.getDensity(x - x0, y - y0);
                 }
@@ -111,7 +106,7 @@ class Simulation {
         }
     }
 
-    setObstacleCircle(x0, y0, r) {
+    setObstacleDisk(x0, y0, r) {
         for (let x = x0 - r; x <= x0 + r; x++) {
             for (let y = y0 - r; y <= y0 + r; y++) {
                 if (Math.sqrt((x0 - x) * (x0 - x) + (y0 - y) * (y0 - y)) <= r) {
@@ -123,22 +118,33 @@ class Simulation {
 
     handleInputs() {
         let inputs = this.inputListener.getInputs();
+
         inputsForEach: for (let input of inputs) {
-            let x0 = input.position.x / this.ratio.x;
-            let y0 = input.position.y / this.ratio.y;
+            let x = Math.floor(input.position.x / this.ratio.x);
+            let y = Math.floor(input.position.y / this.ratio.y);
+            let vx = Math.floor(input.speed.x / this.ratio.x);
+            let vy = Math.floor(input.speed.y / this.ratio.y);
+
+            document.getElementById("mouse-x").innerHTML = x;
+            document.getElementById("mouse-y").innerHTML = y;
+            document.getElementById("mouse-vx").innerHTML = vx;
+            document.getElementById("mouse-vy").innerHTML = vy;
+
             for (let area of this.areas) {
-                if (x0 >= area.position.x &&
-                    x0 < area.position.x + area.field.width &&
-                    y0 >= area.position.y &&
-                    y0 < area.position.y + area.field.height) {
+                let x0 = area.position.x;
+                let y0 = area.position.y;
+                let w = area.field.width;
+                let h = area.field.height;
+
+                if (x >= x0 && x < x0 + w && y >= y0 && y < y0 + h) {
                     let inputInAreaReferentiel = {
                         position: {
-                            x: x0 - area.position.x,
-                            y: y0 - area.position.y
-                        }
+                            x: x - x0,
+                            y: y - y0
+                        },
                         speed: {
-                            x: input.speed.x / this.ratio.x,
-                            y: input.speed.y / this.ratio.y,
+                            x: vx,
+                            y: vy
                         }
                     }
                     area.inputs.push(inputInAreaReferentiel);
@@ -147,6 +153,8 @@ class Simulation {
             }
 
             // TODO: the input is not in any existing area => create a new one
+            console.warn("The input is not in any existing area.");
+
         }
     }
 
@@ -161,22 +169,24 @@ class Simulation {
             this.applyInputs(area);
             this.applyPhysics(area);
             area.field.update();
+            area.field.resetSources();
         });
 
         this.renderer.render();
 
         this.frames++;
-        requestAnimationFrame(this.simulationLoop);
+        requestAnimationFrame(() => this.simulationLoop());
     }
 
     applyInputs(area) {
         let inputs = area.inputs;
         let strenght = this.inputStrenght;
-        inputs.forEach({position, speed} => {
-            area.field.setDensity(position.x, position.y, strenght);
-            area.field.setXVelocity(position.x, position.y, speed.x);
-            area.field.setYVelocity(position.x, position.y, speed.y);
+        inputs.forEach(({position, speed}) => {
+            area.field.setDensitySource(position.x, position.y, strenght);
+            area.field.setXVelocitySource(position.x, position.y, speed.x);
+            area.field.setYVelocitySource(position.x, position.y, speed.y);
         });
+        area.inputs = [];
     }
 
     applyPhysics(area) {

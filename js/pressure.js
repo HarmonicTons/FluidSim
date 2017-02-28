@@ -3,7 +3,8 @@ function FluidField2() {
 
 
     var uiCallback;
-
+    let self = this;
+    this.fluidSolver = {}
     function Field(dens, u, v) {
         // Just exposing the fields here rather than using accessors is a measurable win during display (maybe 5%)
         // but makes the code ugly.
@@ -20,7 +21,7 @@ function FluidField2() {
             return dens.reduce((m, c) => c > m ? c : m);
         };
         this.setVelocity = function(x, y, xv, yv) {
-            u[(x + 1) + (y + 1) * rowSize] = xv;
+            u[(x + 1) + (width + 2) * (y + 1)] = xv;
             v[(x + 1) + (y + 1) * rowSize] = yv;
         };
         this.getXVelocity = function(x, y) {
