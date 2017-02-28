@@ -47,7 +47,7 @@ function FluidField() {
             for (let y = 0; y < height; y++) {
                 let d = dens[(x + 1) + (y + 1) * rowSize];
                 let p = d * 1.5;
-                dens_prev[(x + 1) + (y + 1) * rowSize] = -p;
+                dens[(x + 1) + (y + 1) * rowSize] = d*0.9;
                 let r = 1;
                 let rng = Math.random() * r - r / 2;
                 u_prev[(x + 1) + (y + 1) * rowSize] = rng;
@@ -126,7 +126,7 @@ function FluidField() {
         }
         */
 
-        this.fluidSolver = new FluidField2(width, height, bnds);
+        this.fluidSolver = new FluidField2(width, height, bnds, 0.00001, 0);
         dens = this.fluidSolver.densityField;
         u = this.fluidSolver.xVelocityField;
         v = this.fluidSolver.yVelocityField;

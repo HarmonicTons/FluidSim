@@ -26,7 +26,6 @@ class FluidField2 {
         this.height = height;
         this.obstacleMap = obstacleMap;
         this.diffusionRate = diffusionRate;
-        this.diffusionRate = 0; // FIXME a diff != 0 makes the solver diverge no matter what
         this.viscosity = viscosity;
         this.solverIterations = solverIterations;
         this.defaultStepDuration = defaultStepDuration;
