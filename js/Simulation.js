@@ -15,7 +15,7 @@ class Simulation {
         this.densityToVelocityEquation = d => {
             return {
                 x: 0,
-                y: - Math.pow(d / 100, 0.4) / 1.2
+                y: -Math.pow(d / 100, 0.4) / 1.2
             }
         }
 
@@ -247,5 +247,112 @@ class Simulation {
             }
         }
         this.areas.push(newArea);
+        return newArea;
+    }
+
+    removeArea(area) {
+        let index = this.areas.indexOf(area);
+        if (index >= 0) {
+            this.areas.splice(index, 1);
+        } else {
+            console.warn("The area specified does not exist in the simulation.");
+        }
+    }
+
+    // WIP
+    moveArea(area, dx, dy) {
+        area.position.x += dx;
+        area.position.y += dy;
+
+        let w = area.field.width;
+        let h = area.field.height;
+
+        // TODO: obstacle from simulation not from old position
+
+        function setTo0(x, y) {
+            area.field.setObstacle(x, y, 0);
+            area.field.setDensity(x, y, 0);
+            area.field.setXVelocity(x, y, 0);
+            area.field.setYVelocity(x, y, 0);
+            area.field.setDensitySource(x, y, 0);
+            area.field.setXVelocitySource(x, y, 0);
+            area.field.setYVelocitySource(x, y, 0);
+        }
+
+        function setFromOld(x, y) {
+            area.field.setObstacle(x, y, area.field.getObstacle(x + dx, y + dy));
+            area.field.setDensity(x, y, area.field.getDensity(x + dx, y + dy));
+            area.field.setXVelocity(x, y, area.field.getXVelocity(x + dx, y + dy));
+            area.field.setYVelocity(x, y, area.field.getYVelocity(x + dx, y + dy));
+            area.field.setDensitySource(x, y, area.field.getDensitySource(x + dx, y + dy));
+            area.field.setXVelocitySource(x, y, area.field.getXVelocitySource(x + dx, y + dy));
+            area.field.setYVelocitySource(x, y, area.field.getYVelocitySource(x + dx, y + dy));
+        }
+
+        if (dx > 0 && dy > 0) {
+            for (let x = 0; x < w; x++) {
+                if (x >= w - dx) {
+                    for (let y = 0; y < h; y++) {
+                        setTo0(x, y);
+                    }
+                } else {
+                    for (let y = 0; y < h; y++) {
+                        if (y >= h - dy) {
+                            setTo0(x, y);
+                        } else {
+                            setFromOld(x, y);
+                        }
+                    }
+                }
+            }
+        } else if (dx < 0 && dy > 0) {
+            for (let x = w - 1; x >= 0; x--) {
+                if (x < dx) {
+                    for (let y = 0; y < h; y++) {
+                        setTo0(x, y);
+                    }
+                } else {
+                    for (let y = 0; y < h; y++) {
+                        if (y >= h - dy) {
+                            setTo0(x, y);
+                        } else {
+                            setFromOld(x, y);
+                        }
+                    }
+                }
+            }
+        } else if (dx > 0 && dy < 0) {
+            for (let x = 0; x < w; x++) {
+                if (x >= w - dx) {
+                    for (let y = 0; y < h; y++) {
+                        setTo0(x, y);
+                    }
+                } else {
+                    for (let y = h - 1; y >= 0; y--) {
+                        if (y < dy) {
+                            setTo0(x, y);
+                        } else {
+                            setFromOld(x, y);
+                        }
+                    }
+                }
+            }
+        } else if (dx < 0 && dy < 0) {
+            for (let x = w - 1; x >= 0; x--) {
+                if (x < -dx) {
+                    for (let y = 0; y < h; y++) {
+                        setTo0(x, y);
+                    }
+                } else {
+                    for (let y = h - 1; y >= 0; y--) {
+                        if (y < -dy) {
+                            setTo0(x, y);
+                        } else {
+                            setFromOld(x, y);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

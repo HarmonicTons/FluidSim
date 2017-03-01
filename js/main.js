@@ -1,7 +1,7 @@
 // parameters
 const simulationSize = {
-    width: 50,
-    height: 50
+    width: 100,
+    height: 100
 }
 const displaySize = {
     width: 100,
@@ -24,7 +24,16 @@ let simulation = new Simulation(simulationSize.width, simulationSize.height, flu
 simulation.setObstacleDisk(25,25,8);
 
 // set a global area (not optimal for big size simulation > 80*80px)
-simulation.newArea(0, 0, simulationSize.width, simulationSize.height);
+let area = simulation.newArea(0, 0, 50, 50);
 
 // start simulation
 simulation.start();
+
+let d = -20;
+let i=0;
+setInterval(function(){
+    if (i > 1) return;
+    i++;
+    d *= -1;
+    simulation.moveArea(area, d, d);
+},1000)

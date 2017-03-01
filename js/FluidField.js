@@ -48,7 +48,7 @@ class FluidField {
         if (i >= 0) {
             return this.obstacleMap[this.index(x, y)];
         }
-        throw 'the specified coordinates are out of the field';
+        throw `the specified coordinates are out of the field: (x: ${x}, y: ${y})`;
     }
     setObstacle(x, y, v) {
         let i = this.index(x, y);
@@ -62,21 +62,21 @@ class FluidField {
         if (i >= 0) {
             return this.densityField[this.index(x, y)];
         }
-        throw 'the specified coordinates are out of the field';
+        throw `the specified coordinates are out of the field: (x: ${x}, y: ${y})`;
     }
     getXVelocity(x, y) {
         let i = this.index(x, y);
         if (i >= 0) {
             return this.xVelocityField[this.index(x, y)];
         }
-        throw 'the specified coordinates are out of the field';
+        throw `the specified coordinates are out of the field: (x: ${x}, y: ${y})`;
     }
     getYVelocity(x, y) {
         let i = this.index(x, y);
         if (i >= 0) {
             return this.yVelocityField[this.index(x, y)];
         }
-        throw 'the specified coordinates are out of the field';
+        throw `the specified coordinates are out of the field: (x: ${x}, y: ${y})`;
     }
     setDensity(x, y, v) {
         let i = this.index(x, y);
@@ -102,21 +102,39 @@ class FluidField {
         if (i >= 0) {
             return this.densitySourceField[this.index(x, y)];
         }
-        throw 'the specified coordinates are out of the field';
+        throw `the specified coordinates are out of the field: (x: ${x}, y: ${y})`;
     }
     getXVelocitySource(x, y) {
         let i = this.index(x, y);
         if (i >= 0) {
             return this.xVelocitySourceField[this.index(x, y)];
         }
-        throw 'the specified coordinates are out of the field';
+        throw `the specified coordinates are out of the field: (x: ${x}, y: ${y})`;
     }
     getYVelocitySource(x, y) {
         let i = this.index(x, y);
         if (i >= 0) {
             return this.yVelocitySourceField[this.index(x, y)];
         }
-        throw 'the specified coordinates are out of the field';
+        throw `the specified coordinates are out of the field: (x: ${x}, y: ${y})`;
+    }
+    setDensitySource(x, y, v) {
+        let i = this.index(x, y);
+        if (i >= 0) {
+            this.densitySourceField[this.index(x, y)] = v;
+        }
+    }
+    setXVelocitySource(x, y, v) {
+        let i = this.index(x, y);
+        if (i >= 0) {
+            this.xVelocitySourceField[this.index(x, y)] = v;
+        }
+    }
+    setYVelocitySource(x, y, v) {
+        let i = this.index(x, y);
+        if (i >= 0) {
+            this.yVelocitySourceField[this.index(x, y)] = v;
+        }
     }
     addDensitySource(x, y, v) {
         let i = this.index(x, y);
