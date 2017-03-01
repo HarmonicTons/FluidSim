@@ -11,12 +11,28 @@ class Simulation {
         this.solverIterations = 10;
         this.areas = [];
 
+        this.densityHalfLife = 1000; // in ms
+        this.densityToVelocityEquation = d => {
+            return {
+                x: 0,
+                y: - Math.pow(d / 100, 0.4) / 1.2
+            }
+        }
+
+        this.backgroundWind = 2;
+
         this.inputStrenght = 500;
+        this.inputRadius = 5;
+        this.inputVelocityFactor = 0.2;
 
         this.resetObstacleMap();
 
         this.renderer = new Renderer(this, canvas);
         this.inputListener = new InputListener(canvas);
+    }
+
+    get densityDecay() {
+        return Math.pow(1 / 2, this.stepDuration / this.densityHalfLife);
     }
 
     get ratio() {
@@ -101,7 +117,7 @@ class Simulation {
     setObstacleSquare(x0, y0, w, h) {
         for (let x = x0; x < w; x++) {
             for (let y = y0; y < h; y++) {
-                setObstacle(x, y, 1);
+                this.setObstacle(x, y, 1);
             }
         }
     }
@@ -110,7 +126,7 @@ class Simulation {
         for (let x = x0 - r; x <= x0 + r; x++) {
             for (let y = y0 - r; y <= y0 + r; y++) {
                 if (Math.sqrt((x0 - x) * (x0 - x) + (y0 - y) * (y0 - y)) <= r) {
-                    setObstacle(x, y, 1);
+                    this.setObstacle(x, y, 1);
                 }
             }
         }
@@ -124,11 +140,6 @@ class Simulation {
             let y = Math.floor(input.position.y / this.ratio.y);
             let vx = Math.floor(input.speed.x / this.ratio.x);
             let vy = Math.floor(input.speed.y / this.ratio.y);
-
-            document.getElementById("mouse-x").innerHTML = x;
-            document.getElementById("mouse-y").innerHTML = y;
-            document.getElementById("mouse-vx").innerHTML = vx;
-            document.getElementById("mouse-vy").innerHTML = vy;
 
             for (let area of this.areas) {
                 let x0 = area.position.x;
@@ -180,18 +191,43 @@ class Simulation {
 
     applyInputs(area) {
         let inputs = area.inputs;
-        let strenght = this.inputStrenght;
-        inputs.forEach(({position, speed}) => {
-            area.field.setDensitySource(position.x, position.y, strenght);
-            area.field.setXVelocitySource(position.x, position.y, speed.x);
-            area.field.setYVelocitySource(position.x, position.y, speed.y);
+        inputs.forEach(({
+            position,
+            speed
+        }) => {
+            let x0 = position.x;
+            let y0 = position.y;
+            let r = this.inputRadius;
+            for (let x = x0 - r; x <= x0 + r; x++) {
+                for (let y = y0 - r; y <= y0 + r; y++) {
+                    let distance = Math.sqrt((x0 - x) * (x0 - x) + (y0 - y) * (y0 - y));
+                    if (distance <= r) {
+                        let strenght = this.inputStrenght * (1 - distance / r);
+                        area.field.addDensitySource(x, y, strenght);
+                        area.field.addXVelocitySource(x, y, speed.x * this.inputVelocityFactor);
+                        area.field.addYVelocitySource(x, y, speed.y * this.inputVelocityFactor);
+                    }
+                }
+            }
         });
         area.inputs = [];
     }
 
     applyPhysics(area) {
-        // TODO
-        // fire physic or other
+        for (let x = 0; x < area.field.width; x++) {
+            for (let y = 0; y < area.field.height; y++) {
+                // density decay
+                let density = area.field.getDensity(x, y);
+                let d = density * this.densityDecay;
+                area.field.setDensity(x, y, d);
+                // velocity
+                let dv = this.densityToVelocityEquation(density);
+                let vx = this.backgroundWind * (Math.random() - 0.5) + dv.x;
+                let vy = this.backgroundWind * (Math.random() - 0.5) + dv.y;
+                area.field.addXVelocitySource(x, y, vx);
+                area.field.addYVelocitySource(x, y, vy);
+            }
+        }
     }
 
     newArea(x, y, w, h) {

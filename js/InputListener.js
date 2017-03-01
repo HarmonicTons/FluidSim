@@ -14,6 +14,7 @@ class InputListener {
                 y: e.offsetY,
                 _at: Date.now()
             };
+            return false;
         }
         this.element.onmouseup = function(e) {
             mouseData.status = 'up';
@@ -57,8 +58,9 @@ class MouseData {
             x: 0,
             y: 0
         }
-        // recalculate speed every 100ms
-        setInterval(() => this.setSpeed(), 100);
+        this.speedInterval = 100;
+        // reassert the mouse speed frequently
+        setInterval(() => this.setSpeed(), this.speedInterval);
     }
 
     setSpeed() {
@@ -77,10 +79,10 @@ class MouseData {
             x: 0,
             y: 0
         }
-        if ((t1 != t0) && (t1 - t0 < 200) && (Date.now() - t1 < 100)) {
+        if ((t1 != t0) && (t1 - t0 < 2* this.speedInterval) && (Date.now() - t1 < this.speedInterval)) {
             speed = {
-                x: (x1 - x0) / (t1 - t0) * 100,
-                y: (y1 - y0) / (t1 - t0) * 100
+                x: (x1 - x0) / (t1 - t0) * this.speedInterval,
+                y: (y1 - y0) / (t1 - t0) * this.speedInterval
             }
         }
 

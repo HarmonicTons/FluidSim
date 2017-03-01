@@ -1,10 +1,14 @@
 class Renderer {
-    constructor(simulation, canvas) {
+    constructor(simulation, canvas, displayDensity = true, displayVelocity = false) {
         this.simulation = simulation;
         this.canvas = canvas;
+        this.displayDensity = displayDensity;
+        this.displayVelocity = displayVelocity;
+
+        // display canvas
         this.context = canvas.getContext("2d");
         this.context.imageSmoothingEnabled = false;
-
+        // create buffer canvas
         this.canvasBuffer = document.createElement('canvas');
         this.canvasBuffer.width = simulation.width;
         this.canvasBuffer.height = simulation.height;
@@ -14,6 +18,11 @@ class Renderer {
     }
 
     render() {
+        this.displayDensity && this.renderDensity();
+        this.displayVelocity && this.renderVelocity();
+    }
+
+    renderDensity() {
         let canvas = this.canvas;
         let canvasBuffer = this.canvasBuffer;
         let data = this.imageDataBuffer.data;
@@ -33,6 +42,11 @@ class Renderer {
         }
     }
 
+    renderVelocity() {
+
+        // TODO: render the velocity field with vector on each pixel
+
+    }
 
     _renderFlame(data) {
         let w = this.simulation.width;
@@ -49,7 +63,11 @@ class Renderer {
         for (let x = 0; x < w; x++) {
             for (let y = 0; y < h; y++) {
                 let c = this.simulation.getDensity(x, y);
-                if (c >= 45) {
+                let o = this.simulation.getObstacle(x,y);
+                if (o) {
+                    // rgb(0,0,255)
+                    setPixel(x, y, 0, 0, 255);
+                } else if (c >= 45) {
                     // rgb(210,210,255)
                     setPixel(x, y, 210, 210, 255);
                 } else if (c >= 18) {

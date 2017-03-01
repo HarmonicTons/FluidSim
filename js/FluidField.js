@@ -1,11 +1,9 @@
 /**
  * 2D Fluid solver
  *
- * Use .nextStep() to solve and update the fluid field.
- *
- * Original code in C written by Jos Stam.
+ * Original solver written in C by Jos Stam.
  * http://www.dgp.toronto.edu/people/stam/reality/index.html
- * Adapted to JavaScript by Thomas Roncin.
+ * Adapted to JavaScript and completed by Thomas Roncin.
  */
 
 /**
@@ -19,7 +17,6 @@
  * @param {number} [defaultStepDuration = 100] default step's duration (in ms)
  */
 
-// pour garde 60 FPS en continue il faut que iterations = 36000 / w / h
 class FluidField {
     constructor(width, height, diffusionRate = 0, viscosity = 0, solverIterations = 10, defaultStepDuration = 100) {
         this.width = width;
@@ -39,52 +36,105 @@ class FluidField {
     }
 
     index(x, y) {
+        if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+            return -1;
+        }
         return (x + 1) + (this.width + 2) * (y + 1);
     }
+
     //obstacleMap
     getObstacle(x, y) {
-        return this.obstacleMap[this.index(x, y)];
+        let i = this.index(x, y);
+        if (i >= 0) {
+            return this.obstacleMap[this.index(x, y)];
+        }
+        throw 'the specified coordinates are out of the field';
     }
     setObstacle(x, y, v) {
-        this.obstacleMap[this.index(x, y)] = v;
+        let i = this.index(x, y);
+        if (i >= 0) {
+            this.obstacleMap[this.index(x, y)] = v;
+        }
     }
     // fields
     getDensity(x, y) {
-        return this.densityField[this.index(x, y)];
+        let i = this.index(x, y);
+        if (i >= 0) {
+            return this.densityField[this.index(x, y)];
+        }
+        throw 'the specified coordinates are out of the field';
     }
     getXVelocity(x, y) {
-        return this.xVelocityField[this.index(x, y)];
+        let i = this.index(x, y);
+        if (i >= 0) {
+            return this.xVelocityField[this.index(x, y)];
+        }
+        throw 'the specified coordinates are out of the field';
     }
     getYVelocity(x, y) {
-        return this.yVelocityField[this.index(x, y)];
+        let i = this.index(x, y);
+        if (i >= 0) {
+            return this.yVelocityField[this.index(x, y)];
+        }
+        throw 'the specified coordinates are out of the field';
     }
     setDensity(x, y, v) {
-        this.densityField[this.index(x, y)] = v;
+        let i = this.index(x, y);
+        if (i >= 0) {
+            this.densityField[this.index(x, y)] = v;
+        }
     }
     setXVelocity(x, y, v) {
-        this.xVelocityField[this.index(x, y)] = v;
+        let i = this.index(x, y);
+        if (i >= 0) {
+            this.xVelocityField[this.index(x, y)] = v;
+        }
     }
     setYVelocity(x, y, v) {
-        this.yVelocityField[this.index(x, y)] = v;
+        let i = this.index(x, y);
+        if (i >= 0) {
+            this.yVelocityField[this.index(x, y)] = v;
+        }
     }
     // sources
     getDensitySource(x, y) {
-        return this.densitySourceField[this.index(x, y)];
+        let i = this.index(x, y);
+        if (i >= 0) {
+            return this.densitySourceField[this.index(x, y)];
+        }
+        throw 'the specified coordinates are out of the field';
     }
     getXVelocitySource(x, y) {
-        return this.xVelocitySourceField[this.index(x, y)];
+        let i = this.index(x, y);
+        if (i >= 0) {
+            return this.xVelocitySourceField[this.index(x, y)];
+        }
+        throw 'the specified coordinates are out of the field';
     }
     getYVelocitySource(x, y) {
-        return this.yVelocitySourceField[this.index(x, y)];
+        let i = this.index(x, y);
+        if (i >= 0) {
+            return this.yVelocitySourceField[this.index(x, y)];
+        }
+        throw 'the specified coordinates are out of the field';
     }
-    setDensitySource(x, y, v) {
-        this.densitySourceField[this.index(x, y)] = v;
+    addDensitySource(x, y, v) {
+        let i = this.index(x, y);
+        if (i >= 0) {
+            this.densitySourceField[this.index(x, y)] += v;
+        }
     }
-    setXVelocitySource(x, y, v) {
-        this.xVelocitySourceField[this.index(x, y)] = v;
+    addXVelocitySource(x, y, v) {
+        let i = this.index(x, y);
+        if (i >= 0) {
+            this.xVelocitySourceField[this.index(x, y)] += v;
+        }
     }
-    setYVelocitySource(x, y, v) {
-        this.yVelocitySourceField[this.index(x, y)] = v;
+    addYVelocitySource(x, y, v) {
+        let i = this.index(x, y);
+        if (i >= 0) {
+            this.yVelocitySourceField[this.index(x, y)] += v;
+        }
     }
     resetSources() {
         this.densitySourceField.fill(0);
