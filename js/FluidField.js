@@ -248,6 +248,9 @@ class FluidField {
     }
 
     _lin_solve(b, x, x0, a, c) {
+        
+        // TODO : never solve the part under obstacles
+
         let IX = (x, y) => x + (this.width + 2) * y;
         let kMax = this.solverIterations;
         let w = this.width;

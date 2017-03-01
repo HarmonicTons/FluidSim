@@ -1,12 +1,12 @@
 // parameters
 const simulationSize = {
-    width: 100,
-    height: 100
-}
+    width: 60,
+    height: 60
+};
 const displaySize = {
-    width: 100,
-    height: 100
-}
+    width: 400,
+    height: 400
+};
 const fluidName = 'air';
 
 // get the fluid from the catalog
@@ -21,19 +21,14 @@ canvas.height = displaySize.height;
 let simulation = new Simulation(simulationSize.width, simulationSize.height, fluid, canvas);
 
 // set a disk obstacle to show off
-simulation.setObstacleDisk(25,25,8);
+simulation.setObstacleDisk(25, 25, 8);
+simulation.setObstacleSquare(0, 0, simulationSize.width, 2);
+simulation.setObstacleSquare(0, 0, 2, simulationSize.height);
+simulation.setObstacleSquare(0, simulationSize.height - 2, simulationSize.width, 2);
+simulation.setObstacleSquare(simulationSize.width - 2, 0, 2, simulationSize.height);
 
 // set a global area (not optimal for big size simulation > 80*80px)
-let area = simulation.newArea(0, 0, 50, 50);
+let area = simulation.newArea(0, 0, simulationSize.width, simulationSize.height);
 
 // start simulation
 simulation.start();
-
-let d = -20;
-let i=0;
-setInterval(function(){
-    if (i > 1) return;
-    i++;
-    d *= -1;
-    simulation.moveArea(area, d, d);
-},1000)

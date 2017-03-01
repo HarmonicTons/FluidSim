@@ -64,10 +64,7 @@ class Renderer {
             for (let y = 0; y < h; y++) {
                 let c = this.simulation.getDensity(x, y);
                 let o = this.simulation.getObstacle(x,y);
-                if (o) {
-                    // rgb(0,0,255)
-                    setPixel(x, y, 0, 0, 255);
-                } else if (c >= 45) {
+                if (c >= 45) {
                     // rgb(210,210,255)
                     setPixel(x, y, 210, 210, 255);
                 } else if (c >= 18) {
@@ -92,6 +89,12 @@ class Renderer {
                     // rgb(0,0,255)
                     setPixel(x, y, 0, 0, 255);
                 }
+
+                if (o) {
+                    // rgb(0,0,255)
+                    setPixel(x, y, 0, 0, 255);
+                }
+
             }
         }
     }

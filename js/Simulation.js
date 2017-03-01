@@ -16,13 +16,13 @@ class Simulation {
             return {
                 x: 0,
                 y: -Math.pow(d / 100, 0.4) / 1.2
-            }
-        }
+            };
+        };
 
         this.backgroundWind = 2;
 
-        this.inputStrenght = 500;
-        this.inputRadius = 5;
+        this.inputStrenght = 300;
+        this.inputRadius = 4;
         this.inputVelocityFactor = 0.2;
 
         this.resetObstacleMap();
@@ -39,7 +39,7 @@ class Simulation {
         return {
             x: this.canvas.width / this.width,
             y: this.canvas.height / this.height
-        }
+        };
     }
 
     _get(what, x, y) {
@@ -115,8 +115,8 @@ class Simulation {
 
     // TODO: add rotation
     setObstacleSquare(x0, y0, w, h) {
-        for (let x = x0; x < w; x++) {
-            for (let y = y0; y < h; y++) {
+        for (let x = x0; x < x0 + w; x++) {
+            for (let y = y0; y < y0 + h; y++) {
                 this.setObstacle(x, y, 1);
             }
         }
@@ -125,7 +125,7 @@ class Simulation {
     setObstacleDisk(x0, y0, r) {
         for (let x = x0 - r; x <= x0 + r; x++) {
             for (let y = y0 - r; y <= y0 + r; y++) {
-                if (Math.sqrt((x0 - x) * (x0 - x) + (y0 - y) * (y0 - y)) <= r) {
+                if (Math.sqrt((x0 - x) * (x0 - x) + (y0 - y) * (y0 - y)) < r) {
                     this.setObstacle(x, y, 1);
                 }
             }
@@ -157,7 +157,7 @@ class Simulation {
                             x: vx,
                             y: vy
                         }
-                    }
+                    };
                     area.inputs.push(inputInAreaReferentiel);
                     continue inputsForEach;
                 }
@@ -201,7 +201,7 @@ class Simulation {
             for (let x = x0 - r; x <= x0 + r; x++) {
                 for (let y = y0 - r; y <= y0 + r; y++) {
                     let distance = Math.sqrt((x0 - x) * (x0 - x) + (y0 - y) * (y0 - y));
-                    if (distance <= r) {
+                    if (distance < r) {
                         let strenght = this.inputStrenght * (1 - distance / r);
                         area.field.addDensitySource(x, y, strenght);
                         area.field.addXVelocitySource(x, y, speed.x * this.inputVelocityFactor);
@@ -259,7 +259,6 @@ class Simulation {
         }
     }
 
-    // WIP
     moveArea(area, dx, dy) {
         area.position.x += dx;
         area.position.y += dy;
@@ -267,10 +266,13 @@ class Simulation {
         let w = area.field.width;
         let h = area.field.height;
 
-        // TODO: obstacle from simulation not from old position
+        for (let i = 0; i < w; i++) {
+            for (let j = 0; j < h; j++) {
+                area.field.setObstacle(i, j, this.getObstacle(i + area.position.x, j + area.position.y));
+            }
+        }
 
         function setTo0(x, y) {
-            area.field.setObstacle(x, y, 0);
             area.field.setDensity(x, y, 0);
             area.field.setXVelocity(x, y, 0);
             area.field.setYVelocity(x, y, 0);
@@ -280,7 +282,6 @@ class Simulation {
         }
 
         function setFromOld(x, y) {
-            area.field.setObstacle(x, y, area.field.getObstacle(x + dx, y + dy));
             area.field.setDensity(x, y, area.field.getDensity(x + dx, y + dy));
             area.field.setXVelocity(x, y, area.field.getXVelocity(x + dx, y + dy));
             area.field.setYVelocity(x, y, area.field.getYVelocity(x + dx, y + dy));
@@ -290,13 +291,13 @@ class Simulation {
         }
 
         if (dx > 0 && dy > 0) {
-            for (let x = 0; x < w; x++) {
+            for (let x = 1; x < w - 1; x++) {
                 if (x >= w - dx) {
-                    for (let y = 0; y < h; y++) {
+                    for (let y = 1; y < h - 1; y++) {
                         setTo0(x, y);
                     }
                 } else {
-                    for (let y = 0; y < h; y++) {
+                    for (let y = 1 ; y < h - 1; y++) {
                         if (y >= h - dy) {
                             setTo0(x, y);
                         } else {
@@ -306,13 +307,13 @@ class Simulation {
                 }
             }
         } else if (dx < 0 && dy > 0) {
-            for (let x = w - 1; x >= 0; x--) {
+            for (let x = w - 2; x >= 1; x--) {
                 if (x < dx) {
-                    for (let y = 0; y < h; y++) {
+                    for (let y = 1; y < h - 1; y++) {
                         setTo0(x, y);
                     }
                 } else {
-                    for (let y = 0; y < h; y++) {
+                    for (let y = 1; y < h - 1; y++) {
                         if (y >= h - dy) {
                             setTo0(x, y);
                         } else {
@@ -322,13 +323,13 @@ class Simulation {
                 }
             }
         } else if (dx > 0 && dy < 0) {
-            for (let x = 0; x < w; x++) {
+            for (let x = 1; x < w - 1; x++) {
                 if (x >= w - dx) {
-                    for (let y = 0; y < h; y++) {
+                    for (let y = 1; y < h - 1; y++) {
                         setTo0(x, y);
                     }
                 } else {
-                    for (let y = h - 1; y >= 0; y--) {
+                    for (let y = h - 2; y >= 1; y--) {
                         if (y < dy) {
                             setTo0(x, y);
                         } else {
@@ -338,13 +339,13 @@ class Simulation {
                 }
             }
         } else if (dx < 0 && dy < 0) {
-            for (let x = w - 1; x >= 0; x--) {
+            for (let x = w - 2; x >= 1; x--) {
                 if (x < -dx) {
-                    for (let y = 0; y < h; y++) {
+                    for (let y = 1; y < h - 1; y++) {
                         setTo0(x, y);
                     }
                 } else {
-                    for (let y = h - 1; y >= 0; y--) {
+                    for (let y = h - 2; y >= 1; y--) {
                         if (y < -dy) {
                             setTo0(x, y);
                         } else {
