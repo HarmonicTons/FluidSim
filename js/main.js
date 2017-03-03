@@ -1,11 +1,11 @@
 // parameters
 const simulationSize = {
-    width: 60,
-    height: 60
+    width: 80,
+    height: 80
 };
 const displaySize = {
-    width: 400,
-    height: 400
+    width: 160,
+    height: 160
 };
 const fluidName = 'air';
 
@@ -32,3 +32,9 @@ let area = simulation.newArea(0, 0, simulationSize.width, simulationSize.height)
 
 // start simulation
 simulation.start();
+
+
+// display fps
+setInterval(function() {
+    document.getElementById("fps").innerHTML = simulation.fps;
+},1000);

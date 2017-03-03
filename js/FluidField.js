@@ -248,18 +248,24 @@ class FluidField {
     }
 
     _lin_solve(b, x, x0, a, c) {
-        
-        // TODO : never solve the part under obstacles
-
+        let bnds = this.obstacleMap;
         let IX = (x, y) => x + (this.width + 2) * y;
         let kMax = this.solverIterations;
         let w = this.width;
         let h = this.height;
 
+        // parcourir toutes les cases pour sauter les obstacles est inutile
+        // de même parcourir toutes les cases dans _set_bnd pour ne garder que les obstacles est inutile
+        // il faut mettre en place deux listes: cases libres et obstacles.
+        // on parcour la liste correspondante au besoin
+        // cela permet d'avoir le moins d'opérations possibles
+
         for (let k = 0; k < kMax; k++) {
             for (let i = 1; i <= w; i++) {
                 for (let j = 1; j <= h; j++) {
-                    x[IX(i, j)] = (x0[IX(i, j)] + a * (x[IX(i - 1, j)] + x[IX(i + 1, j)] + x[IX(i, j - 1)] + x[IX(i, j + 1)])) / c;
+                    if (bnds[IX(i, j)] !== 1) {
+                        x[IX(i, j)] = (x0[IX(i, j)] + a * (x[IX(i - 1, j)] + x[IX(i + 1, j)] + x[IX(i, j - 1)] + x[IX(i, j + 1)])) / c;
+                    }
                 }
             }
             this._set_bnd(b, x);
@@ -272,6 +278,7 @@ class FluidField {
     }
 
     _advect(b, d, d0, u, v, dt) {
+        let bnds = this.obstacleMap;
         let IX = (x, y) => x + (this.width + 2) * y;
         let w = this.width;
         let h = this.height;
@@ -279,39 +286,44 @@ class FluidField {
         let dt0 = dt * Math.sqrt(w * h) / 1000;
         for (let i = 1; i < w; i++) {
             for (let j = 1; j < h; j++) {
-                let x = i - dt0 * u[IX(i, j)];
-                let y = j - dt0 * v[IX(i, j)];
+                if (bnds[IX(i, j)] !== 1) {
+                    let x = i - dt0 * u[IX(i, j)];
+                    let y = j - dt0 * v[IX(i, j)];
 
-                if (x < 0.5) x = 0.5;
-                if (x > w + 0.5) x = w + 0.5;
-                let i0 = parseInt(x);
-                let i1 = i0 + 1;
+                    if (x < 0.5) x = 0.5;
+                    if (x > w + 0.5) x = w + 0.5;
+                    let i0 = parseInt(x);
+                    let i1 = i0 + 1;
 
-                if (y < 0.5) y = 0.5;
-                if (y > h + 0.5) y = h + 0.5;
-                let j0 = parseInt(y);
-                let j1 = j0 + 1;
+                    if (y < 0.5) y = 0.5;
+                    if (y > h + 0.5) y = h + 0.5;
+                    let j0 = parseInt(y);
+                    let j1 = j0 + 1;
 
-                let s1 = x - i0;
-                let s0 = 1 - s1;
-                let t1 = y - j0;
-                let t0 = 1 - t1;
+                    let s1 = x - i0;
+                    let s0 = 1 - s1;
+                    let t1 = y - j0;
+                    let t0 = 1 - t1;
 
-                d[IX(i, j)] = s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) + s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
+                    d[IX(i, j)] = s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) + s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
+                }
             }
         }
         this._set_bnd(b, d);
     }
 
     _project(u, v, p, div) {
+        let bnds = this.obstacleMap;
         let IX = (x, y) => x + (this.width + 2) * y;
         let w = this.width;
         let h = this.height;
 
         for (let i = 1; i < w; i++) {
             for (let j = 1; j < h; j++) {
-                div[IX(i, j)] = -0.5 * (u[IX(i + 1, j)] - u[IX(i - 1, j)] + v[IX(i, j + 1)] - v[IX(i, j - 1)]) / Math.sqrt(w * h);
-                p[IX(i, j)] = 0;
+                if (bnds[IX(i, j)] !== 1) {
+                    div[IX(i, j)] = -0.5 * (u[IX(i + 1, j)] - u[IX(i - 1, j)] + v[IX(i, j + 1)] - v[IX(i, j - 1)]) / Math.sqrt(w * h);
+                    p[IX(i, j)] = 0;
+                }
             }
         }
         this._set_bnd(0, div);
@@ -321,8 +333,10 @@ class FluidField {
 
         for (let i = 1; i < w; i++) {
             for (let j = 1; j < h; j++) {
-                u[IX(i, j)] -= 0.5 * Math.sqrt(w * h) * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
-                v[IX(i, j)] -= 0.5 * Math.sqrt(w * h) * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
+                if (bnds[IX(i, j)] !== 1) {
+                    u[IX(i, j)] -= 0.5 * Math.sqrt(w * h) * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
+                    v[IX(i, j)] -= 0.5 * Math.sqrt(w * h) * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
+                }
             }
         }
         this._set_bnd(1, u);

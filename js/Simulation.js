@@ -11,6 +11,9 @@ class Simulation {
         this.solverIterations = 10;
         this.areas = [];
 
+        this.fps = 0;
+        this._lastFrameTime = 0;
+
         this.densityHalfLife = 1000; // in ms
         this.densityToVelocityEquation = d => {
             return {
@@ -174,6 +177,14 @@ class Simulation {
             return;
         }
 
+        // update fps counter:
+        let currentTime = Date.now();
+        if (currentTime != this._lastFrameTime) {
+            this.fps = Math.floor(1000/(currentTime - this._lastFrameTime));
+            this._lastFrameTime = currentTime;
+        }
+
+
         this.handleInputs();
 
         this.areas.forEach(area => {
@@ -184,6 +195,7 @@ class Simulation {
         });
 
         this.renderer.render();
+
 
         this.frames++;
         requestAnimationFrame(() => this.simulationLoop());
