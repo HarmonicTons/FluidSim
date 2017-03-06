@@ -180,7 +180,7 @@ class Simulation {
         // update fps counter:
         let currentTime = Date.now();
         if (currentTime != this._lastFrameTime) {
-            this.fps = Math.floor(1000/(currentTime - this._lastFrameTime));
+            this.fps = Math.floor(1000 / (currentTime - this._lastFrameTime));
             this._lastFrameTime = currentTime;
         }
 
@@ -226,20 +226,24 @@ class Simulation {
     }
 
     applyPhysics(area) {
-        for (let x = 0; x < area.field.width; x++) {
-            for (let y = 0; y < area.field.height; y++) {
-                // density decay
-                let density = area.field.getDensity(x, y);
-                let d = density * this.densityDecay;
-                area.field.setDensity(x, y, d);
-                // velocity
-                let dv = this.densityToVelocityEquation(density);
-                let vx = this.backgroundWind * (Math.random() - 0.5) + dv.x;
-                let vy = this.backgroundWind * (Math.random() - 0.5) + dv.y;
-                area.field.addXVelocitySource(x, y, vx);
-                area.field.addYVelocitySource(x, y, vy);
-            }
+        // TODO: apply physics to the boundaries too
+        let indexes = area.field.freeIndexes;
+        for (let index of indexes) {
+            let y = Math.floor(index / (area.field.width + 2));
+            let x = index - y * (area.field.width + 2);
+
+            // density decay
+            let density = area.field.getDensity(x, y);
+            let d = density * this.densityDecay;
+            area.field.setDensity(x, y, d);
+            // velocity
+            let dv = this.densityToVelocityEquation(density);
+            let vx = this.backgroundWind * (Math.random() - 0.5) + dv.x;
+            let vy = this.backgroundWind * (Math.random() - 0.5) + dv.y;
+            area.field.addXVelocitySource(x, y, vx);
+            area.field.addYVelocitySource(x, y, vy);
         }
+
     }
 
     newArea(x, y, w, h) {
@@ -258,6 +262,7 @@ class Simulation {
                 newArea.field.setObstacle(i, j, this.getObstacle(i + x, j + y));
             }
         }
+        newArea.field.setIndexes();
         this.areas.push(newArea);
         return newArea;
     }
@@ -283,6 +288,7 @@ class Simulation {
                 area.field.setObstacle(i, j, this.getObstacle(i + area.position.x, j + area.position.y));
             }
         }
+        area.field.setIndexes();
 
         function setTo0(x, y) {
             area.field.setDensity(x, y, 0);
@@ -309,7 +315,7 @@ class Simulation {
                         setTo0(x, y);
                     }
                 } else {
-                    for (let y = 1 ; y < h - 1; y++) {
+                    for (let y = 1; y < h - 1; y++) {
                         if (y >= h - dy) {
                             setTo0(x, y);
                         } else {

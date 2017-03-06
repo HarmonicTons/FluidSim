@@ -33,6 +33,8 @@ class FluidField {
         this.densitySourceField = (new Array(size)).fill(0);
         this.xVelocitySourceField = (new Array(size)).fill(0);
         this.yVelocitySourceField = (new Array(size)).fill(0);
+
+        this.setIndexes();
     }
 
     index(x, y) {
@@ -40,6 +42,49 @@ class FluidField {
             return -1;
         }
         return (x + 1) + (this.width + 2) * (y + 1);
+    }
+
+    setIndexes() {
+        this.freeIndexes = [];
+        this.boundaries = [];
+
+        let bnds = this.obstacleMap;
+        let w = this.width;
+        let h = this.height;
+        let IX = (x, y) => x + (this.width + 2) * y;
+
+        for (let i = 1; i <= w; i++) {
+            for (let j = 1; j <= h; j++) {
+                // if this case is an obstacle
+                if (bnds[IX(i, j)] !== 0) {
+                    let neighboorhood = [IX(i, j)];
+                    if (bnds[IX(i - 1, j)] === 0) {
+                        neighboorhood.push(IX(i - 1, j));
+                    }
+                    if (bnds[IX(i + 1, j)] === 0) {
+                        neighboorhood.push(IX(i + 1, j));
+                    }
+                    if (bnds[IX(i, j - 1)] === 0) {
+                        neighboorhood.push(IX(i, j - 1));
+                    }
+                    if (bnds[IX(i, j + 1)] === 0) {
+                        neighboorhood.push(IX(i, j + 1));
+                    }
+                    // if this case is a on the edge of an obstacle (not inside one)
+                    // TODO: to create or move fields faster: catch the borders of obstacles directly in Simulation (set them to 2 in obstacleMap) to skip the inside cases directly
+                    if (neighboorhood.length > 1) {
+                        this.boundaries.push(neighboorhood);
+                    }
+                } else {
+                    this.freeIndexes.push(IX(i, j));
+                }
+            }
+        }
+
+        console.log(`Number of free cases: ${this.freeIndexes.length}`);
+        console.log(`Number of boundary cases: ${this.boundaries.length}`);
+        let calc = this.freeIndexes.length * (10 + 5 * this.solverIterations) + this.boundaries.length * (14 + 3 * this.solverIterations);
+        console.log(`Number of calculations per loop: ${calc}`);
     }
 
     //obstacleMap
@@ -214,59 +259,23 @@ class FluidField {
     }
 
     _set_bnd(b, u) {
-        let bnds = this.obstacleMap;
-        let w = this.width;
-        let h = this.height;
         let IX = (x, y) => x + (this.width + 2) * y;
 
-        for (let i = 1; i <= w; i++) {
-            for (let j = 1; j <= h; j++) {
-                // if this case is an obstacle
-                if (bnds[IX(i, j)] === 1) {
-                    let neighboors = [];
-                    if (bnds[IX(i - 1, j)] === 0) {
-                        neighboors.push(u[IX(i - 1, j)]);
-                    }
-                    if (bnds[IX(i + 1, j)] === 0) {
-                        neighboors.push(u[IX(i + 1, j)]);
-                    }
-                    if (bnds[IX(i, j - 1)] === 0) {
-                        neighboors.push(u[IX(i, j - 1)]);
-                    }
-                    if (bnds[IX(i, j + 1)] === 0) {
-                        neighboors.push(u[IX(i, j + 1)]);
-                    }
-                    if (neighboors.length === 0) {
-                        u[IX(i, j)] = 0;
-                    } else {
-                        let val = neighboors.reduce((sum, n) => sum += n, 0) / neighboors.length;
-                        u[IX(i, j)] = b >= 1 ? -val : val;
-                    }
-                }
-            }
+        for (let boundary of this.boundaries) {
+            let val = boundary.slice(1).reduce((sum, n) => sum += u[n], 0) / (boundary.length - 1);
+            u[boundary[0]] = b >= 1 ? -val : val;
         }
     }
 
     _lin_solve(b, x, x0, a, c) {
-        let bnds = this.obstacleMap;
         let IX = (x, y) => x + (this.width + 2) * y;
         let kMax = this.solverIterations;
-        let w = this.width;
-        let h = this.height;
-
-        // parcourir toutes les cases pour sauter les obstacles est inutile
-        // de même parcourir toutes les cases dans _set_bnd pour ne garder que les obstacles est inutile
-        // il faut mettre en place deux listes: cases libres et obstacles.
-        // on parcour la liste correspondante au besoin
-        // cela permet d'avoir le moins d'opérations possibles
 
         for (let k = 0; k < kMax; k++) {
-            for (let i = 1; i <= w; i++) {
-                for (let j = 1; j <= h; j++) {
-                    if (bnds[IX(i, j)] !== 1) {
-                        x[IX(i, j)] = (x0[IX(i, j)] + a * (x[IX(i - 1, j)] + x[IX(i + 1, j)] + x[IX(i, j - 1)] + x[IX(i, j + 1)])) / c;
-                    }
-                }
+            for (let index of this.freeIndexes) {
+                let j = Math.floor(index / (this.width + 2));
+                let i = index - j * (this.width + 2);
+                x[index] = (x0[index] + a * (x[IX(i - 1, j)] + x[IX(i + 1, j)] + x[IX(i, j - 1)] + x[IX(i, j + 1)])) / c;
             }
             this._set_bnd(b, x);
         }
@@ -284,30 +293,30 @@ class FluidField {
         let h = this.height;
 
         let dt0 = dt * Math.sqrt(w * h) / 1000;
-        for (let i = 1; i < w; i++) {
-            for (let j = 1; j < h; j++) {
-                if (bnds[IX(i, j)] !== 1) {
-                    let x = i - dt0 * u[IX(i, j)];
-                    let y = j - dt0 * v[IX(i, j)];
 
-                    if (x < 0.5) x = 0.5;
-                    if (x > w + 0.5) x = w + 0.5;
-                    let i0 = parseInt(x);
-                    let i1 = i0 + 1;
+        for (let index of this.freeIndexes) {
+            let j = Math.floor(index / (this.width + 2));
+            let i = index - j * (this.width + 2);
 
-                    if (y < 0.5) y = 0.5;
-                    if (y > h + 0.5) y = h + 0.5;
-                    let j0 = parseInt(y);
-                    let j1 = j0 + 1;
+            let x = i - dt0 * u[index];
+            let y = j - dt0 * v[index];
 
-                    let s1 = x - i0;
-                    let s0 = 1 - s1;
-                    let t1 = y - j0;
-                    let t0 = 1 - t1;
+            if (x < 0.5) x = 0.5;
+            if (x > w + 0.5) x = w + 0.5;
+            let i0 = parseInt(x);
+            let i1 = i0 + 1;
 
-                    d[IX(i, j)] = s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) + s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
-                }
-            }
+            if (y < 0.5) y = 0.5;
+            if (y > h + 0.5) y = h + 0.5;
+            let j0 = parseInt(y);
+            let j1 = j0 + 1;
+
+            let s1 = x - i0;
+            let s0 = 1 - s1;
+            let t1 = y - j0;
+            let t0 = 1 - t1;
+
+            d[index] = s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) + s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
         }
         this._set_bnd(b, d);
     }
@@ -318,26 +327,24 @@ class FluidField {
         let w = this.width;
         let h = this.height;
 
-        for (let i = 1; i < w; i++) {
-            for (let j = 1; j < h; j++) {
-                if (bnds[IX(i, j)] !== 1) {
-                    div[IX(i, j)] = -0.5 * (u[IX(i + 1, j)] - u[IX(i - 1, j)] + v[IX(i, j + 1)] - v[IX(i, j - 1)]) / Math.sqrt(w * h);
-                    p[IX(i, j)] = 0;
-                }
-            }
+        for (let index of this.freeIndexes) {
+            let j = Math.floor(index / (this.width + 2));
+            let i = index - j * (this.width + 2);
+
+            div[index] = -0.5 * (u[IX(i + 1, j)] - u[IX(i - 1, j)] + v[IX(i, j + 1)] - v[IX(i, j - 1)]) / Math.sqrt(w * h);
+            p[index] = 0;
         }
         this._set_bnd(0, div);
         this._set_bnd(0, p);
 
         this._lin_solve(0, p, div, 1, 4);
 
-        for (let i = 1; i < w; i++) {
-            for (let j = 1; j < h; j++) {
-                if (bnds[IX(i, j)] !== 1) {
-                    u[IX(i, j)] -= 0.5 * Math.sqrt(w * h) * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
-                    v[IX(i, j)] -= 0.5 * Math.sqrt(w * h) * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
-                }
-            }
+        for (let index of this.freeIndexes) {
+            let j = Math.floor(index / (this.width + 2));
+            let i = index - j * (this.width + 2);
+
+            u[index] -= 0.5 * Math.sqrt(w * h) * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
+            v[index] -= 0.5 * Math.sqrt(w * h) * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
         }
         this._set_bnd(1, u);
         this._set_bnd(2, v);

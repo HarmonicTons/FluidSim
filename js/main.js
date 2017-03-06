@@ -21,7 +21,7 @@ canvas.height = displaySize.height;
 let simulation = new Simulation(simulationSize.width, simulationSize.height, fluid, canvas);
 
 // set a disk obstacle to show off
-simulation.setObstacleDisk(25, 25, 8);
+simulation.setObstacleDisk(40, 40, 20);
 simulation.setObstacleSquare(0, 0, simulationSize.width, 2);
 simulation.setObstacleSquare(0, 0, 2, simulationSize.height);
 simulation.setObstacleSquare(0, simulationSize.height - 2, simulationSize.width, 2);
@@ -37,4 +37,4 @@ simulation.start();
 // display fps
 setInterval(function() {
     document.getElementById("fps").innerHTML = simulation.fps;
-},1000);
+}, 1000);
