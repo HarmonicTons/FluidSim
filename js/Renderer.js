@@ -64,19 +64,21 @@ class Renderer {
             for (let y = 0; y < h; y++) {
                 let c = this.simulation.getDensity(x, y);
                 let o = this.simulation.getObstacle(x,y);
-                if (c >= 45) {
+                //setPixel(x, y, c*255/500, 0, 0);
+
+                if (c >= 800) {
                     // rgb(210,210,255)
                     setPixel(x, y, 210, 210, 255);
-                } else if (c >= 18) {
+                } else if (c >= 600) {
                     // rgb(255,165,0)
                     setPixel(x, y, 255, 165, 0);
-                } else if (c >= 4) {
+                } else if (c >= 400) {
                     // rgb(255,45,0)
-                    setPixel(x, y, 255, 45, 0);
-                } else if (c >= 3.8) {
+                    setPixel(x, y, 240, 30, 0);
+                } else {
                     // rgb(0,0,0)
                     setPixel(x, y, 0, 0, 0);
-                } else if (c >= 1) {
+                } /*else if (c >= 1) {
                     // rgb(10,10,10)
                     setPixel(x, y, 10, 10, 10);
                 } else if (c >= 0.2) {
@@ -88,7 +90,7 @@ class Renderer {
                 } else {
                     // rgb(0,0,255)
                     setPixel(x, y, 0, 0, 255);
-                }
+                }*/
 
                 if (o) {
                     // rgb(0,0,255)

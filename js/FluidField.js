@@ -27,7 +27,7 @@ class FluidField {
         this.defaultStepDuration = defaultStepDuration;
         let size = (width + 2) * (height + 2); // +2 for borders
         this.obstacleMap = (new Array(size)).fill(0);
-        this.densityField = (new Array(size)).fill(0);
+        this.densityField = (new Array(size)).fill(300);
         this.xVelocityField = (new Array(size)).fill(0);
         this.yVelocityField = (new Array(size)).fill(0);
         this.densitySourceField = (new Array(size)).fill(0);

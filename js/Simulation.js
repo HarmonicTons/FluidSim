@@ -14,18 +14,20 @@ class Simulation {
         this.fps = 0;
         this._lastFrameTime = 0;
 
-        this.densityHalfLife = 1000; // in ms
+        this.defaultDensity = 300;
+        this.densityHalfLife = 200; // in ms
         this.densityToVelocityEquation = d => {
             return {
                 x: 0,
-                y: -Math.pow(d / 100, 0.4) / 1.2
+                y: -Math.pow(d / 100000, 0.4)
             };
         };
 
-        this.backgroundWind = 2;
+        this.backgroundWind = 0// 1;
 
-        this.inputStrenght = 300;
-        this.inputRadius = 4;
+        this.inputStrenght = 6000;
+        this.flicker = 0.8;
+        this.inputRadius = 5;
         this.inputVelocityFactor = 0.2;
 
         this.resetObstacleMap();
@@ -210,12 +212,17 @@ class Simulation {
             let x0 = position.x;
             let y0 = position.y;
             let r = this.inputRadius;
+            let nominalStrenght = this.inputStrenght * (1 - this.flicker * Math.random());
+            let randomX = 0*(Math.random() - 0.5);
+            let randomY = 0*(Math.random() - 0.5);
             for (let x = x0 - r; x <= x0 + r; x++) {
                 for (let y = y0 - r; y <= y0 + r; y++) {
                     let distance = Math.sqrt((x0 - x) * (x0 - x) + (y0 - y) * (y0 - y));
                     if (distance < r) {
-                        let strenght = this.inputStrenght * (1 - distance / r);
+                        let strenght = nominalStrenght * (1 - distance / r);
                         area.field.addDensitySource(x, y, strenght);
+                        area.field.addXVelocitySource(x,y, randomX);
+                        area.field.addYVelocitySource(x,y, randomY);
                         area.field.addXVelocitySource(x, y, speed.x * this.inputVelocityFactor);
                         area.field.addYVelocitySource(x, y, speed.y * this.inputVelocityFactor);
                     }
@@ -228,20 +235,24 @@ class Simulation {
     applyPhysics(area) {
         // TODO: apply physics to the boundaries too
         let indexes = area.field.freeIndexes;
+        let w = area.field.width;
+        let h = area.field.height;
         for (let index of indexes) {
-            let y = Math.floor(index / (area.field.width + 2));
-            let x = index - y * (area.field.width + 2);
+            let y = Math.floor(index / (w + 2));
+            let x = index - y * (w + 2);
 
-            // density decay
-            let density = area.field.getDensity(x, y);
-            let d = density * this.densityDecay;
-            area.field.setDensity(x, y, d);
-            // velocity
-            let dv = this.densityToVelocityEquation(density);
-            let vx = this.backgroundWind * (Math.random() - 0.5) + dv.x;
-            let vy = this.backgroundWind * (Math.random() - 0.5) + dv.y;
-            area.field.addXVelocitySource(x, y, vx);
-            area.field.addYVelocitySource(x, y, vy);
+            if (x > 0 && x < w - 1 && y > 0 && y < h - 1) {
+                // density decay
+                let density = area.field.getDensity(x, y);
+                let d = this.defaultDensity + (density - this.defaultDensity) * this.densityDecay;
+                area.field.setDensity(x, y, d);
+                // velocity
+                let dv = this.densityToVelocityEquation(density);
+                let vx = this.backgroundWind * (Math.random() - 0.5) + dv.x;
+                let vy = this.backgroundWind * (Math.random() - 0.5) + dv.y;
+                area.field.addXVelocitySource(x, y, vx);
+                area.field.addYVelocitySource(x, y, vy);
+            }
         }
 
     }
